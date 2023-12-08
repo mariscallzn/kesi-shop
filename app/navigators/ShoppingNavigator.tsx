@@ -1,26 +1,38 @@
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {CompositeScreenProps} from '@react-navigation/native';
+import {
+  createNativeStackNavigator,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
+import {observer} from 'mobx-react-lite';
 import React from 'react';
 import CreateListScreen from '../screens/create-list/CreateListScreen';
-import ListGroupScreen from '../screens/list-group/ListGroupScreen';
+import BusinessStoresScreen from '../screens/business-stores/BusinessStoreScreen';
+import {AppStackParamList, AppStackScreenProps} from './AppNavigator';
 //#region Types
 export type ShoppingStackParamList = {
-  ListGroups: undefined;
+  BusinessStores: undefined;
   List: undefined;
   CreateList: undefined;
 };
+
+export type ShoppingStackScreenProps<T extends keyof ShoppingStackParamList> =
+  CompositeScreenProps<
+    NativeStackScreenProps<ShoppingStackParamList, T>,
+    AppStackScreenProps<keyof AppStackParamList>
+  >;
 //#endregion
 
 //#region
 const Stack = createNativeStackNavigator<ShoppingStackParamList>();
 
-const ShoppingNavigator = () => {
+const ShoppingNavigator = observer(() => {
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen name="ListGroups" component={ListGroupScreen} />
+      <Stack.Screen name="BusinessStores" component={BusinessStoresScreen} />
       <Stack.Screen name="CreateList" component={CreateListScreen} />
     </Stack.Navigator>
   );
-};
+});
 
 export default ShoppingNavigator;
 //#endregion

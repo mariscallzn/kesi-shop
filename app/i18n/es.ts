@@ -5,8 +5,12 @@ const es = {
     back: 'Atrás',
     logOut: 'Cerrar sesión',
   },
-  ListGroupScreen: {
-    newList: 'Nueva lista',
+  BusinessStoresScreen: {
+    addStore: 'Agregar tienda',
+  },
+  CreateListScreen: {
+    listName: 'Nombre',
+    createList: 'Crear lista',
   },
 };
 

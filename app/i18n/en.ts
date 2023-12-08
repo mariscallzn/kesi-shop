@@ -5,8 +5,12 @@ const en = {
     back: 'Back',
     logOut: 'Log Out',
   },
-  ListGroupScreen: {
-    newList: 'New list',
+  BusinessStoresScreen: {
+    addStore: 'Add store',
+  },
+  CreateListScreen: {
+    listName: 'List name',
+    createList: 'Create',
   },
 };
 export default en;
