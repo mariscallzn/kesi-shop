@@ -5,8 +5,8 @@ const en = {
     back: 'Back',
     logOut: 'Log Out',
   },
-  BusinessStoresScreen: {
-    addStore: 'Add store',
+  ShoppingListsScreen: {
+    addShoppingList: 'Add shopping list',
   },
   CreateListScreen: {
     listName: 'List name',

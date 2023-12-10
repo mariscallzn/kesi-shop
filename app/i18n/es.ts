@@ -5,8 +5,8 @@ const es = {
     back: 'Atrás',
     logOut: 'Cerrar sesión',
   },
-  BusinessStoresScreen: {
-    addStore: 'Agregar tienda',
+  ShoppingListsScreen: {
+    addShoppingList: 'Agregar lista de compras',
   },
   CreateListScreen: {
     listName: 'Nombre',

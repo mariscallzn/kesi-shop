@@ -6,11 +6,11 @@ import {
 import {observer} from 'mobx-react-lite';
 import React from 'react';
 import CreateListScreen from '../screens/create-list/CreateListScreen';
-import BusinessStoresScreen from '../screens/business-stores/BusinessStoreScreen';
+import ShoppingListsScreen from '../screens/shopping-lists/ShoppingListsScreen';
 import {AppStackParamList, AppStackScreenProps} from './AppNavigator';
 //#region Types
 export type ShoppingStackParamList = {
-  BusinessStores: undefined;
+  ShoppingLists: undefined;
   List: undefined;
   CreateList: undefined;
 };
@@ -28,7 +28,7 @@ const Stack = createNativeStackNavigator<ShoppingStackParamList>();
 const ShoppingNavigator = observer(() => {
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen name="BusinessStores" component={BusinessStoresScreen} />
+      <Stack.Screen name="ShoppingLists" component={ShoppingListsScreen} />
       <Stack.Screen name="CreateList" component={CreateListScreen} />
     </Stack.Navigator>
   );

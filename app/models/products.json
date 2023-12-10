@@ -1,0 +1,166 @@
+[
+  {
+    "id": "001",
+    "name": "Milk"
+  },
+  {
+    "id": "002",
+    "name": "Bread"
+  },
+  {
+    "id": "003",
+    "name": "Eggs"
+  },
+  {
+    "id": "004",
+    "name": "Apples"
+  },
+  {
+    "id": "005",
+    "name": "Oranges"
+  },
+  {
+    "id": "006",
+    "name": "Bananas"
+  },
+  {
+    "id": "007",
+    "name": "Potatoes"
+  },
+  {
+    "id": "008",
+    "name": "Onions"
+  },
+  {
+    "id": "009",
+    "name": "Tomatoes"
+  },
+  {
+    "id": "010",
+    "name": "Chicken"
+  },
+  {
+    "id": "011",
+    "name": "Ground beef"
+  },
+  {
+    "id": "012",
+    "name": "Salmon"
+  },
+  {
+    "id": "013",
+    "name": "Salad mix"
+  },
+  {
+    "id": "014",
+    "name": "Cereal"
+  },
+  {
+    "id": "015",
+    "name": "Yogurt"
+  },
+  {
+    "id": "016",
+    "name": "Cheese"
+  },
+  {
+    "id": "017",
+    "name": "Coffee"
+  },
+  {
+    "id": "018",
+    "name": "Tea"
+  },
+  {
+    "id": "019",
+    "name": "Pasta"
+  },
+  {
+    "id": "020",
+    "name": "Rice"
+  },
+  {
+    "id": "021",
+    "name": "Beans"
+  },
+  {
+    "id": "022",
+    "name": "Lentils"
+  },
+  {
+    "id": "023",
+    "name": "Frozen pizza"
+  },
+  {
+    "id": "024",
+    "name": "Frozen vegetables"
+  },
+  {
+    "id": "025",
+    "name": "Ice cream"
+  },
+  {
+    "id": "026",
+    "name": "Soda"
+  },
+  {
+    "id": "027",
+    "name": "Water"
+  },
+  {
+    "id": "028",
+    "name": "Paper towels"
+  },
+  {
+    "id": "029",
+    "name": "Toilet paper"
+  },
+  {
+    "id": "030",
+    "name": "Laundry detergent"
+  },
+  {
+    "id": "031",
+    "name": "Dish soap"
+  },
+  {
+    "id": "032",
+    "name": "Garbage bags"
+  },
+  {
+    "id": "033",
+    "name": "Sponges"
+  },
+  {
+    "id": "034",
+    "name": "Toothpaste"
+  },
+  {
+    "id": "035",
+    "name": "Shampoo"
+  },
+  {
+    "id": "036",
+    "name": "Body wash"
+  },
+  {
+    "id": "037",
+    "name": "Deodorant"
+  },
+  {
+    "id": "038",
+    "name": "Shaving cream"
+  },
+  {
+    "id": "039",
+    "name": "Razors"
+  },
+  {
+    "id": "040",
+    "name": "Band-aids"
+  },
+  {
+    "id": "041",
+    "name": "Ibuprofen"
+  }
+]

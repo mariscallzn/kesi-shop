@@ -4,11 +4,13 @@ import {View, ViewStyle} from 'react-native';
 import {Button, IconButton, TextInput} from 'react-native-paper';
 import {Screen} from '../../components/Screen';
 import {translate} from '../../i18n/translate';
+import {useStores} from '../../models/helpers/useStores';
 import {ShoppingStackScreenProps} from '../../navigators/ShoppingNavigator';
 
 const CreateListScreen: FC<ShoppingStackScreenProps<'CreateList'>> = observer(
   _props => {
-    const [text, setText] = React.useState('');
+    const {shoppingStore} = useStores();
+    const [listName, setListName] = React.useState('');
     return (
       <Screen safeAreaEdges={['top']} contentContainerStyle={$container}>
         <IconButton
@@ -21,12 +23,18 @@ const CreateListScreen: FC<ShoppingStackScreenProps<'CreateList'>> = observer(
           <TextInput
             style={$inputText}
             label={translate('CreateListScreen.listName')}
-            value={text}
-            onChangeText={t => setText(t)}
+            value={listName}
+            onChangeText={t => setListName(t)}
             mode="outlined"
           />
         </View>
-        <Button style={$button} mode="contained-tonal">
+        <Button
+          style={$button}
+          mode="contained-tonal"
+          onPress={() => {
+            shoppingStore.addShoppingList(listName);
+            _props.navigation.goBack();
+          }}>
           {translate('CreateListScreen.createList')}
         </Button>
       </Screen>
