@@ -4,9 +4,10 @@ const en = {
     cancel: 'Cancel',
     back: 'Back',
     logOut: 'Log Out',
+    add: 'Add',
   },
   ShoppingListsScreen: {
-    addShoppingList: 'Add shopping list',
+    addShoppingList: 'Shopping list',
   },
   CreateListScreen: {
     listName: 'List name',

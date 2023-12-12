@@ -27,7 +27,7 @@ export const ShoppingListItem = types.model('ShoppingListItem').props({
   unit: '',
 });
 
-export const ShoppingLists = types.model('ShoppingLists').props({
+export const ShoppingList = types.model('ShoppingList').props({
   id: types.identifier,
   name: types.string,
   items: types.array(ShoppingListItem),

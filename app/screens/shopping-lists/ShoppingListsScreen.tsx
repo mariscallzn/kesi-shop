@@ -1,30 +1,37 @@
 import {observer} from 'mobx-react-lite';
 import React, {FC} from 'react';
-import {FlatList, View, ViewStyle} from 'react-native';
-import {AnimatedFAB, Text} from 'react-native-paper';
+import {FlatList, ViewStyle} from 'react-native';
+import {AnimatedFAB} from 'react-native-paper';
 import {Screen} from '../../components/Screen';
 import {translate} from '../../i18n/translate';
 import {useStores} from '../../models/helpers/useStores';
 import {ShoppingStackScreenProps} from '../../navigators/ShoppingNavigator';
+import ShoppingListCard from './ShoppingListCard';
 
 const ShoppingListsScreen: FC<ShoppingStackScreenProps<'ShoppingLists'>> =
   observer(_props => {
     const {shoppingStore} = useStores();
-
-    const renderItem = shoppingList => (
-      <View>
-        <Text>{shoppingList.item.name}</Text>
-      </View>
-    );
 
     return (
       <Screen
         safeAreaEdges={['top', 'bottom']}
         contentContainerStyle={$container}>
         <FlatList
-          data={shoppingStore.shoppingLists}
-          renderItem={renderItem}
           keyExtractor={item => item.id}
+          data={shoppingStore.shoppingLists}
+          renderItem={({item}) => (
+            <ShoppingListCard
+              listId={item.id}
+              cardTitle={item.name}
+              checkedItems={item.checkedItems}
+              totalItems={item.totalItems}
+              onPress={(action, listId) => {
+                if (action === 'card') {
+                  _props.navigation.navigate('ShoppingList', {listId: listId});
+                }
+              }}
+            />
+          )}
         />
         <AnimatedFAB
           extended

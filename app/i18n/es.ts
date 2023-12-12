@@ -4,9 +4,10 @@ const es = {
     cancel: 'Cancelar',
     back: 'Atrás',
     logOut: 'Cerrar sesión',
+    add: 'Agregar',
   },
   ShoppingListsScreen: {
-    addShoppingList: 'Agregar lista de compras',
+    addShoppingList: 'Lista de compras',
   },
   CreateListScreen: {
     listName: 'Nombre',

@@ -6,12 +6,15 @@ import {
 import {observer} from 'mobx-react-lite';
 import React from 'react';
 import CreateListScreen from '../screens/create-list/CreateListScreen';
+import ShoppingListScreen from '../screens/shopping-list/ShoppingListScreen';
 import ShoppingListsScreen from '../screens/shopping-lists/ShoppingListsScreen';
 import {AppStackParamList, AppStackScreenProps} from './AppNavigator';
 //#region Types
 export type ShoppingStackParamList = {
   ShoppingLists: undefined;
-  List: undefined;
+  ShoppingList: {
+    listId: string;
+  };
   CreateList: undefined;
 };
 
@@ -29,6 +32,7 @@ const ShoppingNavigator = observer(() => {
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="ShoppingLists" component={ShoppingListsScreen} />
+      <Stack.Screen name="ShoppingList" component={ShoppingListScreen} />
       <Stack.Screen name="CreateList" component={CreateListScreen} />
     </Stack.Navigator>
   );
