@@ -1,17 +1,9 @@
 import {types} from 'mobx-state-tree';
-import {withSetPropAction} from './helpers/withSetPropAction';
+import {Product} from './ProductsStore';
 
 //TODO: Review identifiers
 // https://mobx-state-tree.js.org/concepts/references#references
 // https://mobx-state-tree.js.org/concepts/references#identifiers
-
-export const Product = types
-  .model('Product')
-  .props({
-    id: types.identifier,
-    name: '',
-  })
-  .actions(withSetPropAction);
 
 export const Category = types.model('Category').props({
   id: types.identifier,

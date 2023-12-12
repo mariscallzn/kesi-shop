@@ -31,7 +31,7 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
           icon={'plus'}
           label={translate('common.add')}
           onPress={() => {
-            console.log('TODO');
+            _props.navigation.navigate('Products');
           }}
           style={$fab}
         />
