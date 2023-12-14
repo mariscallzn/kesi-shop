@@ -17,7 +17,9 @@ export type ShoppingStackParamList = {
     listId: string;
   };
   CreateList: undefined;
-  Products: undefined;
+  Products: {
+    listId?: string;
+  };
 };
 
 export type ShoppingStackScreenProps<T extends keyof ShoppingStackParamList> =

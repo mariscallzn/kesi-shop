@@ -1,25 +1,23 @@
-import React from 'react';
+import React, {FC} from 'react';
 import {observer} from 'mobx-react-lite';
 import {Card, Text} from 'react-native-paper';
+import {ShoppingList} from '../../models/ShoppingLists';
 
 type Action = 'options' | 'card';
 
 type ShoppingListCardType = {
-  listId: string;
-  cardTitle: string;
-  totalItems: number;
-  checkedItems: number;
-  onPress: (action: Action, listId: string) => void;
+  shoppingList: ShoppingList;
+  onPress: (action: Action, id: string) => void;
 };
 
-const ShoppingListCard = observer((props: ShoppingListCardType) => {
-  const {listId, cardTitle, onPress} = props;
+const ShoppingListCard: FC<ShoppingListCardType> = observer(_props => {
+  const {shoppingList, onPress} = _props;
   return (
     <Card
       onPress={() => {
-        onPress('card', listId);
+        onPress('card', shoppingList.id);
       }}>
-      <Text>{cardTitle}</Text>
+      <Text>{shoppingList.name}</Text>
     </Card>
   );
 });

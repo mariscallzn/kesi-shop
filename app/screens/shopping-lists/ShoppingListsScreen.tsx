@@ -21,13 +21,10 @@ const ShoppingListsScreen: FC<ShoppingStackScreenProps<'ShoppingLists'>> =
           data={shoppingStore.shoppingLists}
           renderItem={({item}) => (
             <ShoppingListCard
-              listId={item.id}
-              cardTitle={item.name}
-              checkedItems={item.checkedItems}
-              totalItems={item.totalItems}
-              onPress={(action, listId) => {
+              shoppingList={item}
+              onPress={(action, id) => {
                 if (action === 'card') {
-                  _props.navigation.navigate('ShoppingList', {listId: listId});
+                  _props.navigation.navigate('ShoppingList', {listId: id});
                 }
               }}
             />

@@ -60,7 +60,7 @@ export const useInitialRootStore = (callback: () => void | Promise<void>) => {
       _unsubscribe = unsubscribe;
 
       if (__DEV__) {
-        console.log(rootStore);
+        console.log(JSON.stringify(rootStore));
       }
 
       // let the app know we've finished rehydrating
