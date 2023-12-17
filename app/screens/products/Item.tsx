@@ -1,7 +1,7 @@
-import React from 'react';
 import {observer} from 'mobx-react-lite';
+import React from 'react';
 import {View, ViewStyle} from 'react-native';
-import {Checkbox, Text} from 'react-native-paper';
+import {IconButton, Text} from 'react-native-paper';
 import {Product} from '../../models/Product';
 
 type Action = 'selected' | 'unselected';
@@ -17,8 +17,9 @@ const Item = observer((props: ItemType) => {
   const [_checked, setChecked] = React.useState(checked);
   return (
     <View style={$container}>
-      <Checkbox
-        status={_checked ? 'checked' : 'unchecked'}
+      <IconButton
+        size={20}
+        icon={_checked ? 'close-circle' : 'plus-circle-outline'}
         onPress={() => {
           onSelectedChanged(!_checked ? 'selected' : 'unselected', product);
           setChecked(!_checked);

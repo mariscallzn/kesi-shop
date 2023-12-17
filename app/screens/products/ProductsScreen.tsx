@@ -26,6 +26,7 @@ const ProductsScreen: FC<ShoppingStackScreenProps<'Products'>> = observer(
     return (
       <Screen
         safeAreaEdges={['top', 'bottom']}
+        keyboardShouldPersistTaps={'always'}
         contentContainerStyle={$container}>
         <View style={$topBar}>
           <IconButton
@@ -35,12 +36,14 @@ const ProductsScreen: FC<ShoppingStackScreenProps<'Products'>> = observer(
             }}
           />
           <Searchbar
+            autoFocus
             style={$searchBar}
             value={productName}
             onChangeText={setProductName}
           />
         </View>
         <FlatList
+          keyboardShouldPersistTaps={'always'}
           data={productsStore.filteredProducts(productName)}
           keyExtractor={item => item.id}
           renderItem={({item}) => (
@@ -50,6 +53,7 @@ const ProductsScreen: FC<ShoppingStackScreenProps<'Products'>> = observer(
               )}
               product={item}
               onSelectedChanged={(action, product) => {
+                setProductName('');
                 action === 'selected'
                   ? productsStore.selectProduct(product)
                   : productsStore.unselectProduct(product);
