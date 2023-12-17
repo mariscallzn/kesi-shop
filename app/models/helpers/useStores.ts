@@ -1,3 +1,5 @@
+import {autorun} from 'mobx';
+import {getSnapshot} from 'mobx-state-tree';
 import {createContext, useContext, useEffect, useState} from 'react';
 import {RootStore, RootStoreModel} from '../RootStore';
 import {setupRootStore} from './setupRootStore';
@@ -51,6 +53,11 @@ export const useInitialRootStore = (callback: () => void | Promise<void>) => {
   const rootStore = useStores();
   const [rehydrated, setRehydrated] = useState(false);
 
+  //TODO: Delete in prod. DO NOT RELEASE THIS❗️
+  autorun(() => {
+    console.log(JSON.stringify(getSnapshot(rootStore), null, 2));
+  });
+
   // Kick off initial async loading actions, like loading fonts and rehydrating RootStore
   useEffect(() => {
     let _unsubscribe: () => void | undefined;
@@ -60,7 +67,7 @@ export const useInitialRootStore = (callback: () => void | Promise<void>) => {
       _unsubscribe = unsubscribe;
 
       if (__DEV__) {
-        console.log(JSON.stringify(rootStore));
+        console.log(JSON.stringify(rootStore, null, 2));
       }
 
       // let the app know we've finished rehydrating

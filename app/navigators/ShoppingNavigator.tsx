@@ -19,6 +19,7 @@ export type ShoppingStackParamList = {
   CreateList: undefined;
   Products: {
     listId?: string;
+    shoppingListProducts?: string[];
   };
 };
 

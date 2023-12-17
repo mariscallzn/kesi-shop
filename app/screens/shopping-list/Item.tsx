@@ -11,7 +11,7 @@ export type ItemType = {
 const Item: FC<ItemType> = observer(_props => {
   return (
     <View style={$container}>
-      <Text>{_props.shoppingListItem.product.name}</Text>
+      <Text>{_props.shoppingListItem.product}</Text>
     </View>
   );
 });

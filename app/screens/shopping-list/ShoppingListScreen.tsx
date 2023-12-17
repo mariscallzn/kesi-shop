@@ -44,6 +44,7 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
           onPress={() => {
             _props.navigation.navigate('Products', {
               listId: _props.route.params.listId,
+              shoppingListProducts: items.map(i => i.product),
             });
           }}
           style={$fab}

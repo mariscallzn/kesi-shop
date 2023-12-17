@@ -11,13 +11,17 @@ const ProductsScreen: FC<ShoppingStackScreenProps<'Products'>> = observer(
   _props => {
     const {productsStore} = useStores();
     const [productName, setProductName] = useState('');
-    const listId = _props.route.params.listId;
+    const {listId, shoppingListProducts: selectedProducts} =
+      _props.route.params;
 
     useEffect(() => {
       (async () => {
-        await productsStore.loadProducts();
+        await productsStore.loadProducts(selectedProducts);
       })();
-    }, [productsStore]);
+      return () => {
+        productsStore.clearStateTree();
+      };
+    }, [productsStore, selectedProducts]);
 
     return (
       <Screen
@@ -41,6 +45,9 @@ const ProductsScreen: FC<ShoppingStackScreenProps<'Products'>> = observer(
           keyExtractor={item => item.id}
           renderItem={({item}) => (
             <Item
+              checked={productsStore.selectedProducts.some(
+                i => i.name === item.name,
+              )}
               product={item}
               onSelectedChanged={(action, product) => {
                 action === 'selected'

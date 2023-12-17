@@ -7,20 +7,21 @@ import {Product} from '../../models/Product';
 type Action = 'selected' | 'unselected';
 
 type ItemType = {
+  checked: boolean;
   product: Product;
   onSelectedChanged: (action: Action, product: Product) => void;
 };
 
 const Item = observer((props: ItemType) => {
-  const [checked, setChecked] = React.useState(false);
-  const {product, onSelectedChanged} = props;
+  const {product, checked, onSelectedChanged} = props;
+  const [_checked, setChecked] = React.useState(checked);
   return (
     <View style={$container}>
       <Checkbox
-        status={checked ? 'checked' : 'unchecked'}
+        status={_checked ? 'checked' : 'unchecked'}
         onPress={() => {
-          onSelectedChanged(!checked ? 'selected' : 'unselected', product);
-          setChecked(!checked);
+          onSelectedChanged(!_checked ? 'selected' : 'unselected', product);
+          setChecked(!_checked);
         }}
       />
       <Text variant="titleLarge">{product.name}</Text>

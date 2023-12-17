@@ -6,9 +6,6 @@ export const ProductModel = types
   .props({
     id: types.identifier,
     name: types.string,
-    quantity: 0,
-    unit: '',
-    selected: false,
   })
   .actions(withSetPropAction);
 

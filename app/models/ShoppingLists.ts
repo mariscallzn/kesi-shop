@@ -1,6 +1,5 @@
 import {Instance, SnapshotIn, SnapshotOut, types} from 'mobx-state-tree';
 import {withSetPropAction} from './helpers/withSetPropAction';
-import {ProductModel} from './Product';
 
 //TODO: Review identifiers
 // https://mobx-state-tree.js.org/concepts/references#references
@@ -10,7 +9,9 @@ export const ShoppingListItemModel = types
   .model('ShoppingListItemModel')
   .props({
     id: types.identifier,
-    product: types.reference(ProductModel),
+    product: types.string,
+    quantity: 0,
+    unit: '',
     checked: false,
   })
   .actions(withSetPropAction);
