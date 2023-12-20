@@ -1,18 +1,26 @@
 import {observer} from 'mobx-react-lite';
 import React, {FC} from 'react';
-import {View, ViewStyle} from 'react-native';
+import {TouchableOpacity, ViewStyle} from 'react-native';
 import {Text} from 'react-native-paper';
-import {ShoppingListItem} from '../../models/ShoppingLists';
+import {
+  ShoppingListItem,
+  ShoppingListItemSnapshotIn,
+} from '../../models/ShoppingLists';
 
 export type ItemType = {
   shoppingListItem: ShoppingListItem;
+  onItemPress: (item: ShoppingListItemSnapshotIn) => void;
 };
 
 const Item: FC<ItemType> = observer(_props => {
   return (
-    <View style={$container}>
+    <TouchableOpacity
+      style={$container}
+      onPress={() => {
+        _props.onItemPress(_props.shoppingListItem);
+      }}>
       <Text>{_props.shoppingListItem.product}</Text>
-    </View>
+    </TouchableOpacity>
   );
 });
 

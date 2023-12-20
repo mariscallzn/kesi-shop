@@ -1,11 +1,14 @@
 import {observer} from 'mobx-react-lite';
-import React, {FC} from 'react';
+import React, {FC, useState} from 'react';
 import {FlatList, View, ViewStyle} from 'react-native';
 import {AnimatedFAB, IconButton, Text} from 'react-native-paper';
+import BottomSheet from '../../components/BottomSheet';
 import {Screen} from '../../components/Screen';
 import {translate} from '../../i18n/translate';
 import {useStores} from '../../models/helpers/useStores';
+import {ShoppingListItemSnapshotIn} from '../../models/ShoppingLists';
 import {ShoppingStackScreenProps} from '../../navigators/ShoppingNavigator';
+import AddProduct from './AddProduct';
 import Item from './Item';
 
 const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
@@ -13,12 +16,41 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
     const {shoppingStore} = useStores();
     const {items, name} = shoppingStore.getListById(
       _props.route.params.listId,
-    )!!;
+    )!!; //TODO Review this force read
+    const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
+    const [shoppingListItem, setShoppingListItem] = useState<
+      ShoppingListItemSnapshotIn | undefined
+    >(undefined);
 
     return (
       <Screen
         safeAreaEdges={['top', 'bottom']}
         contentContainerStyle={$container}>
+        <BottomSheet
+          maxHeight={50}
+          isVisible={isBottomSheetVisible}
+          setIsVisible={setBottomSheetVisible}
+          dismissed={() => {
+            setShoppingListItem(undefined);
+          }}>
+          <AddProduct
+            shoppingListItem={shoppingListItem}
+            onAddOrUpdatePress={newOrUpdatedShoppingListItem => {
+              shoppingStore.addOrUpdateProductInShoppingList(
+                newOrUpdatedShoppingListItem,
+                _props.route.params.listId,
+              );
+              setBottomSheetVisible(false);
+            }}
+            onOpenList={() => {
+              setBottomSheetVisible(false);
+              _props.navigation.navigate('Products', {
+                listId: _props.route.params.listId,
+                shoppingListProducts: items.map(i => i.product),
+              });
+            }}
+          />
+        </BottomSheet>
         <View style={$topBar}>
           <IconButton
             icon="arrow-left"
@@ -34,7 +66,15 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
           // It seems that "items" must be called. For some reason
           // if I only pass items it doesn't detect the changes
           data={items.map(i => i)}
-          renderItem={({item}) => <Item shoppingListItem={item} />}
+          renderItem={({item}) => (
+            <Item
+              shoppingListItem={item}
+              onItemPress={itemPressed => {
+                setShoppingListItem(itemPressed);
+                setBottomSheetVisible(true);
+              }}
+            />
+          )}
         />
         <AnimatedFAB
           extended
@@ -42,10 +82,7 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
           icon={'plus'}
           label={translate('common.add')}
           onPress={() => {
-            _props.navigation.navigate('Products', {
-              listId: _props.route.params.listId,
-              shoppingListProducts: items.map(i => i.product),
-            });
+            setBottomSheetVisible(true);
           }}
           style={$fab}
         />

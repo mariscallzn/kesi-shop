@@ -48,9 +48,7 @@ const ProductsScreen: FC<ShoppingStackScreenProps<'Products'>> = observer(
           keyExtractor={item => item.id}
           renderItem={({item}) => (
             <Item
-              checked={productsStore.selectedProducts.some(
-                i => i.name === item.name,
-              )}
+              checked={selectedProducts?.some(i => i === item.name) === true}
               product={item}
               onSelectedChanged={(action, product) => {
                 setProductName('');

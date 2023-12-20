@@ -5,6 +5,25 @@ const en = {
     back: 'Back',
     logOut: 'Log Out',
     add: 'Add',
+    done: 'Done',
+  },
+  ShoppingListScreen: {
+    productName: 'Product name',
+    quantity: 'Quantity',
+    unit: 'Unit',
+  },
+  Units: {
+    Imperial: {
+      lb: 'lb',
+      gal: 'gal',
+      oz: 'oz',
+    },
+    Metric: {
+      kg: 'kg',
+      l: 'l',
+      ml: 'ml',
+    },
+    pkg: 'pkg',
   },
   ShoppingListsScreen: {
     addShoppingList: 'Shopping list',

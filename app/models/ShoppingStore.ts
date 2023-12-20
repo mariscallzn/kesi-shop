@@ -5,6 +5,7 @@ import {Product} from './Product';
 import {
   ShoppingListItem,
   ShoppingListItemModel,
+  ShoppingListItemSnapshotIn,
   ShoppingListModel,
 } from './ShoppingLists';
 
@@ -25,6 +26,25 @@ export const ShoppingStore = types
     addShoppingList(name: string) {
       //TODO: Somehow add it first to the DB and then reflect the result here
       self.shoppingLists.push({id: getUUID(), name: name});
+    },
+    addOrUpdateProductInShoppingList(
+      listItem: ShoppingListItemSnapshotIn,
+      listId: string,
+    ) {
+      //TODO: Check if the products exists, if not then add the new product to the DB
+      const shoppingList = self.getListById(listId);
+      if (shoppingList) {
+        const itemIndex = shoppingList.items.findIndex(
+          item => item.id === listItem.id,
+        );
+        if (itemIndex !== -1) {
+          shoppingList.items.splice(itemIndex, 1, listItem);
+        } else {
+          shoppingList.items.push(
+            ShoppingListItemModel.create({...listItem, id: getUUID()}),
+          );
+        }
+      }
     },
     addProductsToShoppingList(products: Product[], listId: string) {
       if (listId) {
