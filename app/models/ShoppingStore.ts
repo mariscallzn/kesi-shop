@@ -23,6 +23,24 @@ export const ShoppingStore = types
     },
   }))
   .actions(self => ({
+    //TODO: This could be a util instead of an action, and let all the other actions take care of the sorting
+    // Probably once I connect the DB, i could perform the action and always call : loadDB to refresh the state of the list once.
+    sortShoppingListItems(listId: string) {
+      const shoppingList = self.shoppingLists.find(i => i.id === listId);
+      if (shoppingList) {
+        shoppingList.setProp(
+          'items',
+          shoppingList.items.sort((a, b) => +a.checked - +b.checked),
+        );
+      }
+    },
+    checkItemFromList(itemId: string, listId: string, checked: boolean) {
+      self
+        .getListById(listId)
+        ?.items.find(i => i.id === itemId)
+        ?.setProp('checked', checked);
+      this.sortShoppingListItems(listId);
+    },
     addShoppingList(name: string) {
       //TODO: Somehow add it first to the DB and then reflect the result here
       self.shoppingLists.push({id: getUUID(), name: name});
@@ -44,6 +62,8 @@ export const ShoppingStore = types
             ShoppingListItemModel.create({...listItem, id: getUUID()}),
           );
         }
+        //TODO: REVIEW: Somehow I fill this will re-trigger rendering.
+        this.sortShoppingListItems(listId);
       }
     },
     addProductsToShoppingList(products: Product[], listId: string) {
@@ -66,17 +86,18 @@ export const ShoppingStore = types
             } else {
               // Create a new instance from the incoming product
               //TODO: add to DB
-              updatedList.push(
-                ShoppingListItemModel.create({
-                  id: getUUID(),
-                  product: product.name,
-                  checked: false,
-                }),
-              );
+              const newProduct = ShoppingListItemModel.create({
+                id: getUUID(),
+                product: product.name,
+                checked: false,
+              });
+              updatedList.push(newProduct);
             }
           });
           // Override array with the updated list
           shoppingList.setProp('items', updatedList);
+          //TODO: REVIEW: Somehow I fill this will re-trigger rendering.
+          this.sortShoppingListItems(listId);
         }
       }
     },

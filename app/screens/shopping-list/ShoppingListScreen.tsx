@@ -73,6 +73,13 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
                 setShoppingListItem(itemPressed);
                 setBottomSheetVisible(true);
               }}
+              onItemChecked={(itemId, checked) => {
+                shoppingStore.checkItemFromList(
+                  itemId,
+                  _props.route.params.listId,
+                  checked,
+                );
+              }}
             />
           )}
         />
