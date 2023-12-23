@@ -1,12 +1,13 @@
-import {types} from 'mobx-state-tree';
-import {getUUID} from '../utils/misc';
+import {getParent, types} from 'mobx-state-tree';
+import {DAOShoppingListItems, DAOShoppingLists} from '../database/models';
+import {Tables} from '../database/schema';
 import {withSetPropAction} from './helpers/withSetPropAction';
-import {Product} from './Product';
+import {RootStore} from './RootStore';
 import {
-  ShoppingListItem,
   ShoppingListItemModel,
   ShoppingListItemSnapshotIn,
   ShoppingListModel,
+  ShoppingListSnapshotIn,
 } from './ShoppingLists';
 
 export const ShoppingStore = types
@@ -21,84 +22,153 @@ export const ShoppingStore = types
         shoppingList => shoppingList.id === listId,
       );
     },
-  }))
-  .actions(self => ({
-    //TODO: This could be a util instead of an action, and let all the other actions take care of the sorting
-    // Probably once I connect the DB, i could perform the action and always call : loadDB to refresh the state of the list once.
-    sortShoppingListItems(listId: string) {
-      const shoppingList = self.shoppingLists.find(i => i.id === listId);
-      if (shoppingList) {
-        shoppingList.setProp(
-          'items',
-          shoppingList.items.sort((a, b) => +a.checked - +b.checked),
-        );
-      }
+    get rootStore(): RootStore {
+      return getParent(self, 1);
     },
-    checkItemFromList(itemId: string, listId: string, checked: boolean) {
-      self
-        .getListById(listId)
-        ?.items.find(i => i.id === itemId)
-        ?.setProp('checked', checked);
-      this.sortShoppingListItems(listId);
+  }))
+  //Tree operations, these are going to be exposed but rarely used by the components
+  .actions(self => ({
+    pushShoppingList(shoppingList: ShoppingListSnapshotIn) {
+      self.shoppingLists.push(shoppingList);
+    },
+  }))
+  //#region Database operations
+  //#region ShoppingLists' actions
+  .actions(self => ({
+    loadShoppingLists() {
+      (async () => {
+        const dbResult = await self.rootStore.appDatabase
+          .get<DAOShoppingLists>(Tables.shoppingLists)
+          .query()
+          .fetch();
+
+        self.setProp(
+          'shoppingLists',
+          dbResult.map(dbr =>
+            ShoppingListModel.create({id: dbr.id, name: dbr.name}),
+          ),
+        );
+      })();
     },
     addShoppingList(name: string) {
-      //TODO: Somehow add it first to the DB and then reflect the result here
-      self.shoppingLists.push({id: getUUID(), name: name});
+      self.rootStore.dbWrite(async db => {
+        const newList = await db
+          .get<DAOShoppingLists>(Tables.shoppingLists)
+          .create(shoppingList => {
+            shoppingList.name = name;
+          });
+        self.pushShoppingList(
+          ShoppingListModel.create({id: newList.id, name: newList.name}),
+        );
+      });
+    },
+  }))
+  //#endregion
+  //#region ShoppingListItems' actions
+  .actions(self => ({
+    loadShoppingListItems(listId: string) {
+      (async () => {
+        //Fetch data from DB
+        const daoShoppingListItems = await (
+          await self.rootStore.appDatabase
+            .get<DAOShoppingLists>(Tables.shoppingLists)
+            .find(listId)
+        ).shoppingListItems.fetch();
+
+        //Create a reference to the state tree
+        const shoppingList = self.getListById(listId);
+        if (shoppingList) {
+          shoppingList.setProp(
+            'items',
+            //Pass on the DB values to the state tree
+            daoShoppingListItems
+              .map(i =>
+                ShoppingListItemModel.create({
+                  id: i.id,
+                  product: i.productName,
+                  checked: i.checked,
+                  quantity: i.quantity,
+                  unit: i.unit,
+                }),
+              )
+              .sort((a, b) => +a.checked - +b.checked),
+          );
+        }
+      })();
     },
     addOrUpdateProductInShoppingList(
       listItem: ShoppingListItemSnapshotIn,
       listId: string,
     ) {
-      //TODO: Check if the products exists, if not then add the new product to the DB
-      const shoppingList = self.getListById(listId);
-      if (shoppingList) {
-        const itemIndex = shoppingList.items.findIndex(
-          item => item.id === listItem.id,
-        );
-        if (itemIndex !== -1) {
-          shoppingList.items.splice(itemIndex, 1, listItem);
-        } else {
-          shoppingList.items.push(
-            ShoppingListItemModel.create({...listItem, id: getUUID()}),
-          );
-        }
-        //TODO: REVIEW: Somehow I fill this will re-trigger rendering.
-        this.sortShoppingListItems(listId);
-      }
-    },
-    addProductsToShoppingList(products: Product[], listId: string) {
-      if (listId) {
-        const shoppingList = self.getListById(listId);
-        if (shoppingList) {
-          // We create a new array that will remove items or add new ones but keeping those that
-          // existed already
-          const updatedList: ShoppingListItem[] = [];
-
-          // Loop products to update the shopping list with the new items if there are any
-          // or automatically remove those that are not coming from products
-          products.forEach(product => {
-            const existingProduct = shoppingList.items.find(
-              s => s.product === product.name,
-            );
-            // Keep existing products
-            if (existingProduct !== undefined) {
-              updatedList.push(existingProduct);
-            } else {
-              // Create a new instance from the incoming product
-              //TODO: add to DB
-              const newProduct = ShoppingListItemModel.create({
-                id: getUUID(),
-                product: product.name,
-                checked: false,
-              });
-              updatedList.push(newProduct);
-            }
+      (async () => {
+        self.rootStore.appDatabase
+          .get<DAOShoppingListItems>(Tables.shoppingListItems)
+          .find(listItem.id)
+          //If it exists then we update
+          .then(async item => {
+            await item.updateShoppingListItem(listItem);
+            this.loadShoppingListItems(listId);
+          })
+          //If doesn't exist, we create
+          .catch(async _ => {
+            await (
+              await self.rootStore.appDatabase
+                .get<DAOShoppingLists>(Tables.shoppingLists)
+                .find(listId)
+            ).addShoppingListItem(listItem);
+            this.loadShoppingListItems(listId);
           });
-          // Override array with the updated list
-          shoppingList.setProp('items', updatedList);
-          //TODO: REVIEW: Somehow I fill this will re-trigger rendering.
-          this.sortShoppingListItems(listId);
-        }
-      }
+      })();
+    },
+
+    addProductsToShoppingList(products: string[], listId: string) {
+      (async () => {
+        const daoShoppingList = await self.rootStore.appDatabase
+          .get<DAOShoppingLists>(Tables.shoppingLists)
+          .find(listId);
+
+        const daoShoppingListItems =
+          await daoShoppingList.shoppingListItems.fetch();
+
+        const newItems = products.filter(
+          e2 => !daoShoppingListItems.some(e1 => e1.productName === e2),
+        );
+
+        const removedItems = daoShoppingListItems.filter(
+          e1 => !products.some(e2 => e2 === e1.productName),
+        );
+
+        newItems.forEach(newItem => {
+          daoShoppingList.addShoppingListItem({
+            id: 'ignore',
+            product: newItem,
+            checked: false,
+            quantity: 0,
+            unit: '',
+          });
+        });
+
+        self.rootStore.dbWrite(_ => {
+          removedItems.forEach(removedItem => removedItem.destroyPermanently());
+          this.loadShoppingListItems(listId);
+        });
+      })();
+    },
+    checkItemFromList(itemId: string, listId: string, checked: boolean) {
+      (async () => {
+        await (
+          await (
+            await self.rootStore.appDatabase
+              .get<DAOShoppingLists>(Tables.shoppingLists)
+              .find(listId)
+          ).shoppingListItems.fetch()
+        )
+          .find(i => i.id === itemId)
+          ?.toggleItem(checked);
+
+        this.loadShoppingListItems(listId);
+      })();
     },
   }));
+//#endregion
+//#endregion

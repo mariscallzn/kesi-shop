@@ -1,5 +1,5 @@
 import {observer} from 'mobx-react-lite';
-import React, {FC, useState} from 'react';
+import React, {FC, useEffect, useState} from 'react';
 import {FlatList, View, ViewStyle} from 'react-native';
 import {AnimatedFAB, IconButton, Text} from 'react-native-paper';
 import BottomSheet from '../../components/BottomSheet';
@@ -21,6 +21,10 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
     const [shoppingListItem, setShoppingListItem] = useState<
       ShoppingListItemSnapshotIn | undefined
     >(undefined);
+
+    useEffect(() => {
+      shoppingStore.loadShoppingListItems(_props.route.params.listId);
+    }, [shoppingStore, _props.route.params.listId]);
 
     return (
       <Screen

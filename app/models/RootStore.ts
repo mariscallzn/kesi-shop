@@ -1,14 +1,35 @@
-import {Instance, SnapshotOut, types} from 'mobx-state-tree';
+import {Database} from '@nozbe/watermelondb';
+import {getEnv, Instance, SnapshotOut, types} from 'mobx-state-tree';
 import {ProductsStore} from './ProductsStore';
 import {ShoppingStore} from './ShoppingStore';
 
 /**
  * A RootStore model.
  */
-export const RootStoreModel = types.model('RootStoreModel').props({
-  shoppingStore: types.optional(ShoppingStore, {}),
-  productsStore: types.optional(ProductsStore, {}),
-});
+export const RootStoreModel = types
+  .model('RootStoreModel')
+  .props({
+    shoppingStore: types.optional(ShoppingStore, {}),
+    productsStore: types.optional(ProductsStore, {}),
+  })
+  .views(self => ({
+    get appDatabase(): Database {
+      return getEnv(self).database;
+    },
+  }))
+  .actions(self => ({
+    dbWrite(writer: (database: Database) => void) {
+      (async () => {
+        await self.appDatabase.write(async () => {
+          try {
+            await writer(self.appDatabase);
+          } catch (error) {
+            console.error(error);
+          }
+        });
+      })();
+    },
+  }));
 
 /**
  * The RootStore instance.

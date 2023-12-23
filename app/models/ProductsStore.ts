@@ -72,7 +72,7 @@ export const ProductsStore = types
     addProductsToShoppingList(listId: string | undefined) {
       if (listId) {
         self.rootStore.shoppingStore.addProductsToShoppingList(
-          self.selectedProducts,
+          self.selectedProducts.map(i => i.name),
           listId,
         );
       }

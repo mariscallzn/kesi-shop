@@ -1,8 +1,6 @@
-import {autorun} from 'mobx';
-import {getSnapshot} from 'mobx-state-tree';
-import {createContext, useContext, useEffect, useState} from 'react';
+import {createContext, useContext} from 'react';
+import database from '../../database/database';
 import {RootStore, RootStoreModel} from '../RootStore';
-import {setupRootStore} from './setupRootStore';
 
 /**
  * Create the initial (empty) global RootStore instance here.
@@ -16,7 +14,7 @@ import {setupRootStore} from './setupRootStore';
  * very large), you may want to use a different strategy than immediately
  * instantiating it, although that should be rare.
  */
-const _rootStore = RootStoreModel.create({});
+const _rootStore = RootStoreModel.create({}, {database: database});
 
 /**
  * The RootStoreContext provides a way to access
@@ -43,50 +41,3 @@ export const RootStoreProvider = RootStoreContext.Provider;
  * const { someStore, someOtherStore } = useStores()
  */
 export const useStores = () => useContext(RootStoreContext);
-
-/**
- * Used only in the app.tsx file, this hook sets up the RootStore
- * and then rehydrates it. It connects everything with Reactotron
- * and then lets the app know that everything is ready to go.
- */
-export const useInitialRootStore = (callback: () => void | Promise<void>) => {
-  const rootStore = useStores();
-  const [rehydrated, setRehydrated] = useState(false);
-
-  //TODO: Delete in prod. DO NOT RELEASE THIS❗️
-  autorun(() => {
-    console.log(JSON.stringify(getSnapshot(rootStore), null, 2));
-  });
-
-  // Kick off initial async loading actions, like loading fonts and rehydrating RootStore
-  useEffect(() => {
-    let _unsubscribe: () => void | undefined;
-    (async () => {
-      // set up the RootStore (returns the state restored from AsyncStorage)
-      const {unsubscribe} = await setupRootStore(rootStore);
-      _unsubscribe = unsubscribe;
-
-      if (__DEV__) {
-        console.log(JSON.stringify(rootStore, null, 2));
-      }
-
-      // let the app know we've finished rehydrating
-      setRehydrated(true);
-
-      // invoke the callback, if provided
-      if (callback) {
-        callback();
-      }
-    })();
-
-    return () => {
-      // cleanup
-      if (_unsubscribe !== undefined) {
-        _unsubscribe();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return {rootStore, rehydrated};
-};

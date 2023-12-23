@@ -1,5 +1,5 @@
 import {observer} from 'mobx-react-lite';
-import React, {FC} from 'react';
+import React, {FC, useEffect} from 'react';
 import {FlatList, ViewStyle} from 'react-native';
 import {AnimatedFAB} from 'react-native-paper';
 import {Screen} from '../../components/Screen';
@@ -11,6 +11,10 @@ import ShoppingListCard from './ShoppingListCard';
 const ShoppingListsScreen: FC<ShoppingStackScreenProps<'ShoppingLists'>> =
   observer(_props => {
     const {shoppingStore} = useStores();
+
+    useEffect(() => {
+      shoppingStore.loadShoppingLists();
+    }, [shoppingStore]);
 
     return (
       <Screen
