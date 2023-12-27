@@ -1,16 +1,24 @@
 import {observer} from 'mobx-react-lite';
-import React, {FC, useEffect} from 'react';
-import {FlatList, ViewStyle} from 'react-native';
+import React, {FC, useEffect, useState} from 'react';
+import {FlatList, View, ViewStyle} from 'react-native';
 import {AnimatedFAB} from 'react-native-paper';
+import BottomSheet from '../../components/BottomSheet';
 import {Screen} from '../../components/Screen';
 import {translate} from '../../i18n/translate';
 import {useStores} from '../../models/helpers/useStores';
+import {ShoppingListSnapshotIn} from '../../models/ShoppingLists';
 import {ShoppingStackScreenProps} from '../../navigators/ShoppingNavigator';
+import AddShoppingList from './AddShoppingList';
 import ShoppingListCard from './ShoppingListCard';
 
 const ShoppingListsScreen: FC<ShoppingStackScreenProps<'ShoppingLists'>> =
   observer(_props => {
     const {shoppingStore} = useStores();
+
+    const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
+    const [shoppingList, setShoppingList] = useState<
+      ShoppingListSnapshotIn | undefined
+    >(undefined);
 
     useEffect(() => {
       shoppingStore.loadShoppingLists();
@@ -20,9 +28,25 @@ const ShoppingListsScreen: FC<ShoppingStackScreenProps<'ShoppingLists'>> =
       <Screen
         safeAreaEdges={['top', 'bottom']}
         contentContainerStyle={$container}>
+        <BottomSheet
+          maxHeight={50}
+          isVisible={isBottomSheetVisible}
+          setIsVisible={setBottomSheetVisible}
+          dismissed={() => {
+            setShoppingList(undefined);
+          }}>
+          <AddShoppingList
+            shoppingList={shoppingList}
+            onAddOrUpdatePress={value => {
+              shoppingStore.addOrUpdateShoppingList(value);
+              setBottomSheetVisible(false);
+            }}
+          />
+        </BottomSheet>
         <FlatList
           keyExtractor={item => item.id}
           data={shoppingStore.shoppingLists}
+          ItemSeparatorComponent={() => <View style={$flItemSeparator} />}
           renderItem={({item}) => (
             <ShoppingListCard
               shoppingList={item}
@@ -40,7 +64,7 @@ const ShoppingListsScreen: FC<ShoppingStackScreenProps<'ShoppingLists'>> =
           icon={'plus'}
           label={translate('ShoppingListsScreen.addShoppingList')}
           onPress={() => {
-            _props.navigation.navigate('CreateList');
+            setBottomSheetVisible(true);
           }}
           style={$fab}
         />
@@ -51,6 +75,10 @@ const ShoppingListsScreen: FC<ShoppingStackScreenProps<'ShoppingLists'>> =
 //#region Styles
 const $container: ViewStyle = {
   flex: 1,
+};
+
+const $flItemSeparator: ViewStyle = {
+  height: 8,
 };
 
 const $fab: ViewStyle = {

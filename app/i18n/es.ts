@@ -27,10 +27,7 @@ const es = {
   },
   ShoppingListsScreen: {
     addShoppingList: 'Lista de compras',
-  },
-  CreateListScreen: {
-    listName: 'Nombre',
-    createList: 'Crear lista',
+    listName: 'Nombre de la lista',
   },
 };
 

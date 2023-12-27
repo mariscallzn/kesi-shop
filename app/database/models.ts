@@ -1,13 +1,16 @@
-import {associations, Model, Q} from '@nozbe/watermelondb';
+import {associations, Model, Query} from '@nozbe/watermelondb';
 import {
+  children,
   date,
   field,
   immutableRelation,
-  lazy,
   text,
   writer,
 } from '@nozbe/watermelondb/decorators';
-import {ShoppingListItemSnapshotIn} from '../models/ShoppingLists';
+import {
+  ShoppingListItemSnapshotIn,
+  ShoppingListSnapshotIn,
+} from '../models/ShoppingLists';
 import {Columns, Tables} from './schema';
 
 //Docs: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-7.html#definite-assignment-assertions
@@ -25,10 +28,16 @@ export class DAOShoppingLists extends Model {
   @date(ShoppingListsColumns.createdAt) createdAt!: Date;
   @date(ShoppingListsColumns.updatedAt) updatedAt!: Date;
 
-  @lazy
-  shoppingListItems = this.collections
-    .get<DAOShoppingListItems>(Tables.shoppingListItems)
-    .query(Q.where(Columns.shoppingListItems.shoppingListId, this.id));
+  @children(Tables.shoppingListItems)
+  shoppingListItems!: Query<DAOShoppingListItems>;
+
+  @writer async updateShoppingList(
+    shoppingList: ShoppingListSnapshotIn,
+  ): Promise<DAOShoppingLists> {
+    return await this.update(_shoppingList => {
+      _shoppingList.name = shoppingList.name;
+    });
+  }
 
   @writer async addShoppingListItem(
     shoppingListItem: ShoppingListItemSnapshotIn,
@@ -83,5 +92,15 @@ export class DAOShoppingListItems extends Model {
     return await this.update(item => {
       item.checked = checked;
     });
+  }
+
+  convertToTreeModel(): ShoppingListItemSnapshotIn {
+    return {
+      id: this.id,
+      product: this.productName,
+      checked: this.checked,
+      quantity: this.quantity,
+      unit: this.unit,
+    };
   }
 }

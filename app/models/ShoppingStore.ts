@@ -4,7 +4,6 @@ import {Tables} from '../database/schema';
 import {withSetPropAction} from './helpers/withSetPropAction';
 import {RootStore} from './RootStore';
 import {
-  ShoppingListItemModel,
   ShoppingListItemSnapshotIn,
   ShoppingListModel,
   ShoppingListSnapshotIn,
@@ -37,30 +36,50 @@ export const ShoppingStore = types
   .actions(self => ({
     loadShoppingLists() {
       (async () => {
+        const shoppingLists: ShoppingListSnapshotIn[] = [];
         const dbResult = await self.rootStore.appDatabase
           .get<DAOShoppingLists>(Tables.shoppingLists)
           .query()
           .fetch();
 
-        self.setProp(
-          'shoppingLists',
-          dbResult.map(dbr =>
-            ShoppingListModel.create({id: dbr.id, name: dbr.name}),
-          ),
-        );
+        dbResult.forEach(async (result, index) => {
+          const items = await result.shoppingListItems.fetch();
+          shoppingLists.push(
+            ShoppingListModel.create({
+              id: result.id,
+              name: result.name,
+              checkedItems: items.filter(f => f.checked === true).length,
+              totalItems: items.length,
+            }),
+          );
+          //TODO: I kind of feel I need to review this
+          if (index === dbResult.length - 1) {
+            self.setProp('shoppingLists', shoppingLists);
+          }
+        });
       })();
     },
-    addShoppingList(name: string) {
-      self.rootStore.dbWrite(async db => {
-        const newList = await db
-          .get<DAOShoppingLists>(Tables.shoppingLists)
-          .create(shoppingList => {
-            shoppingList.name = name;
+    addOrUpdateShoppingList(shoppingList: ShoppingListSnapshotIn) {
+      self.rootStore.appDatabase
+        .get<DAOShoppingLists>(Tables.shoppingLists)
+        .find(shoppingList.id)
+        .then(async value => {
+          await value.updateShoppingList({
+            id: 'ignore',
+            name: value.name,
           });
-        self.pushShoppingList(
-          ShoppingListModel.create({id: newList.id, name: newList.name}),
-        );
-      });
+          this.loadShoppingLists();
+        })
+        .catch(_ => {
+          self.rootStore.dbWrite(async db => {
+            await db
+              .get<DAOShoppingLists>(Tables.shoppingLists)
+              .create(_shoppingList => {
+                _shoppingList.name = shoppingList.name;
+              });
+            this.loadShoppingLists();
+          });
+        });
     },
   }))
   //#endregion
@@ -78,20 +97,15 @@ export const ShoppingStore = types
         //Create a reference to the state tree
         const shoppingList = self.getListById(listId);
         if (shoppingList) {
+          const items = daoShoppingListItems
+            .map(i => i.convertToTreeModel())
+            .sort((a, b) => +(a.checked ?? false) - +(b.checked ?? false));
+
+          shoppingList.setProp('items', items);
+          shoppingList.setProp('totalItems', items.length);
           shoppingList.setProp(
-            'items',
-            //Pass on the DB values to the state tree
-            daoShoppingListItems
-              .map(i =>
-                ShoppingListItemModel.create({
-                  id: i.id,
-                  product: i.productName,
-                  checked: i.checked,
-                  quantity: i.quantity,
-                  unit: i.unit,
-                }),
-              )
-              .sort((a, b) => +a.checked - +b.checked),
+            'checkedItems',
+            items.filter(i => i.checked === true).length,
           );
         }
       })();

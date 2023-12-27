@@ -27,10 +27,7 @@ const en = {
   },
   ShoppingListsScreen: {
     addShoppingList: 'Shopping list',
-  },
-  CreateListScreen: {
     listName: 'List name',
-    createList: 'Create',
   },
 };
 export default en;

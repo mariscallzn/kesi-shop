@@ -62,7 +62,9 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
               _props.navigation.goBack();
             }}
           />
-          <Text variant="titleMedium">{name}</Text>
+          <Text style={$topBarTitle} variant="titleMedium">
+            {name}
+          </Text>
         </View>
         <FlatList
           keyExtractor={item => item.id}
@@ -109,6 +111,13 @@ const $container: ViewStyle = {
 const $topBar: ViewStyle = {
   flexDirection: 'row',
   alignItems: 'center',
+  marginEnd: 16,
+};
+
+//TODO: FIX: Review why long texts pass beyond edge screen
+const $topBarTitle: ViewStyle = {
+  marginEnd: 16,
+  flex: 1,
 };
 
 const $fab: ViewStyle = {

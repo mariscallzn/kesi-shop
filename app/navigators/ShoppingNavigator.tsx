@@ -5,7 +5,6 @@ import {
 } from '@react-navigation/native-stack';
 import {observer} from 'mobx-react-lite';
 import React from 'react';
-import CreateListScreen from '../screens/create-list/CreateListScreen';
 import ProductsScreen from '../screens/products/ProductsScreen';
 import ShoppingListScreen from '../screens/shopping-list/ShoppingListScreen';
 import ShoppingListsScreen from '../screens/shopping-lists/ShoppingListsScreen';
@@ -16,7 +15,6 @@ export type ShoppingStackParamList = {
   ShoppingList: {
     listId: string;
   };
-  CreateList: undefined;
   Products: {
     listId?: string;
     shoppingListProducts?: string[];
@@ -38,7 +36,6 @@ const ShoppingNavigator = observer(() => {
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="ShoppingLists" component={ShoppingListsScreen} />
       <Stack.Screen name="ShoppingList" component={ShoppingListScreen} />
-      <Stack.Screen name="CreateList" component={CreateListScreen} />
       <Stack.Screen name="Products" component={ProductsScreen} />
     </Stack.Navigator>
   );
