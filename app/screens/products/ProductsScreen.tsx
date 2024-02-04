@@ -11,17 +11,14 @@ const ProductsScreen: FC<ShoppingStackScreenProps<'Products'>> = observer(
   _props => {
     const {productsStore} = useStores();
     const [productName, setProductName] = useState('');
-    const {listId, shoppingListProducts: selectedProducts} =
-      _props.route.params;
+    const {listId} = _props.route.params;
 
     useEffect(() => {
-      (async () => {
-        await productsStore.loadProducts(selectedProducts);
-      })();
+      productsStore.fetchProducts(listId);
       return () => {
         productsStore.clearStateTree();
       };
-    }, [productsStore, selectedProducts]);
+    }, [productsStore, listId]);
 
     return (
       <Screen
@@ -39,37 +36,42 @@ const ProductsScreen: FC<ShoppingStackScreenProps<'Products'>> = observer(
             autoFocus
             style={$searchBar}
             value={productName}
-            onChangeText={setProductName}
+            onChangeText={e => {
+              productsStore.fetchProducts(undefined, e);
+              setProductName(e);
+            }}
           />
         </View>
         <FlatList
           keyboardShouldPersistTaps={'always'}
-          data={productsStore.filteredProducts(productName)}
+          // Somehow I need this hack
+          data={productsStore.products.map(i => i)}
           keyExtractor={item => item.id}
           renderItem={({item}) => (
             <Item
-              checked={selectedProducts?.some(i => i === item.name) === true}
               product={item}
               onSelectedChanged={(action, product) => {
-                setProductName('');
                 action === 'selected'
                   ? productsStore.selectProduct(product)
                   : productsStore.unselectProduct(product);
+                setProductName('');
               }}
             />
           )}
         />
-        <AnimatedFAB
-          extended
-          visible
-          icon={'check'}
-          label={''}
-          onPress={() => {
-            productsStore.addProductsToShoppingList(listId);
-            _props.navigation.goBack();
-          }}
-          style={$fab}
-        />
+        {listId && (
+          <AnimatedFAB
+            extended
+            visible
+            icon={'check'}
+            label={''}
+            onPress={() => {
+              productsStore.addProductsToShoppingList(listId);
+              _props.navigation.goBack();
+            }}
+            style={$fab}
+          />
+        )}
       </Screen>
     );
   },

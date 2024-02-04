@@ -1,14 +1,14 @@
 import {getParent, types} from 'mobx-state-tree';
-import {getUUID} from '../utils/misc';
+import {Product} from '../repositories/ProductRepository';
 import {withSetPropAction} from './helpers/withSetPropAction';
-import {Product, ProductModel} from './Product';
+import {ProductModel} from './Product';
 import {RootStore} from './RootStore';
 
 export const ProductsStore = types
   .model('ProductsStore')
   .props({
     products: types.array(ProductModel),
-    selectedProducts: types.array(types.reference(ProductModel)),
+    selectedProductIds: types.array(types.string),
   })
   .actions(withSetPropAction)
   .views(self => ({
@@ -16,66 +16,86 @@ export const ProductsStore = types
       return getParent(self);
     },
   }))
+  //#region state tree updates
   .actions(self => ({
-    async loadProducts(shoppingListProducts: string[] | undefined) {
-      //TODO: This should come from the DB
-      const products: Product[] = require('../models/products.json');
-      self.setProp('products', products);
-
-      // If ShoppingListScreen pass on products already added we mark them as
-      // selected products
-      if (shoppingListProducts) {
-        shoppingListProducts.forEach(item => {
-          const shoppingListProduct = self.products.find(p => p.name === item);
-          if (shoppingListProduct) {
-            self.selectedProducts.push(shoppingListProduct.id);
-          }
-        });
+    toggleProduct(id: string) {
+      const index = self.products.findIndex(e => e.id === id);
+      if (index !== -1) {
+        self.products[index] = {
+          ...self.products[index],
+          selected: !self.products[index].selected,
+        };
       }
     },
-    filteredProducts(query: string) {
-      let _result: Product[] = [];
-      // As soon as the user starts typing in the search bar we look for the similar item
-      if (query.length > 0) {
-        // We filter the products from the model on a new array
-        _result = self.products.filter(result =>
-          result.name.toLowerCase().includes(query.toLowerCase()),
-        );
-        // If it's an exact match, we pick the loaded product
-        const hasExactMatch = self.products.some(item => item.name === query);
-        // If not, then we create a new instance and we put it at the top/
-        if (!hasExactMatch) {
-          _result.unshift(ProductModel.create({id: getUUID(), name: query}));
-        }
-      } else {
-        _result = self.products;
-      }
-      return _result;
+    addSelectedProductId(id: string) {
+      self.selectedProductIds.push(id);
+      this.toggleProduct(id);
     },
-    selectProduct(product: Product) {
-      // If we cannot find the product, it means that it's coming from the search bar
-      if (self.products.find(p => p.id === product.id) === undefined) {
-        //TODO: Add item to DB
-        self.products.push(product);
-      }
-      self.selectedProducts.push(product.id);
-    },
-    unselectProduct(product: Product) {
-      self.selectedProducts.remove(product);
+    removedSelectedProductId(id: string) {
+      self.selectedProductIds.remove(id);
+      this.toggleProduct(id);
     },
     clearStateTree() {
-      //Clear selected product
-      self.setProp('selectedProducts', []);
       //Clear Products, we don't need to keep them in the tree
       self.setProp('products', []);
+      //Clear selected products ids
+      self.setProp('selectedProductIds', []);
     },
-    addProductsToShoppingList(listId: string | undefined) {
-      if (listId) {
-        self.rootStore.shoppingStore.addProductsToShoppingList(
-          self.selectedProducts.map(i => i.name),
-          listId,
-        );
-      }
-      this.clearStateTree();
+  }))
+  //#endregion
+  //#region DB operations
+  .actions(self => ({
+    fetchProducts(listId?: string, query?: string) {
+      (async () => {
+        try {
+          const products = await self.rootStore.appComponent
+            .productRepository()
+            .findByNameOrGetAll(query);
+
+          if (listId) {
+            const selectedProducts = (
+              await self.rootStore.appComponent
+                .shoppingRepository()
+                .getShoppingListItemsByListId(listId)
+            ).map(shoppingListItem => shoppingListItem.product);
+            self.setProp(
+              'selectedProductIds',
+              selectedProducts.map(sp => sp.id),
+            );
+          }
+
+          self.setProp(
+            'products',
+            products.map(product =>
+              ProductModel.create({
+                id: product.id,
+                name: product.name,
+                selected: self.selectedProductIds.some(id => id === product.id),
+              }),
+            ),
+          );
+        } catch (error) {
+          console.error(error);
+        }
+      })();
+    },
+    selectProduct(product: Product) {
+      (async () => {
+        const _product = await self.rootStore.appComponent
+          .productRepository()
+          .findOrCreate(product);
+        self.addSelectedProductId(_product.id);
+        this.fetchProducts();
+      })();
+    },
+    unselectProduct(product: Product) {
+      self.removedSelectedProductId(product.id);
+    },
+    addProductsToShoppingList(listId: string) {
+      self.rootStore.shoppingStore.addProductsToShoppingList(
+        [...self.selectedProductIds],
+        listId,
+      );
     },
   }));
+//#endregion

@@ -1,3 +1,11 @@
 {
-  "cSpell.words": ["endregion", "Kesi", "Pressable", "Searchbar", "uuidv"]
+  "cSpell.words": [
+    "endregion",
+    "Kesi",
+    "Populator",
+    "Pressable",
+    "Searchbar",
+    "uuidv"
+  ],
+  "java.compile.nullAnalysis.mode": "automatic"
 }

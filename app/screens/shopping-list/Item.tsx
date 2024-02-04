@@ -1,15 +1,12 @@
 import {observer} from 'mobx-react-lite';
-import React, {FC} from 'react';
+import React, {FC, memo} from 'react';
 import {TouchableOpacity, ViewStyle} from 'react-native';
 import {Checkbox, Text} from 'react-native-paper';
-import {
-  ShoppingListItem,
-  ShoppingListItemSnapshotIn,
-} from '../../models/ShoppingLists';
+import {ShoppingListItem} from '../../repositories/ShoppingRepository';
 
 export type ItemType = {
   shoppingListItem: ShoppingListItem;
-  onItemPress: (item: ShoppingListItemSnapshotIn) => void;
+  onItemPress: (item: ShoppingListItem) => void;
   onItemChecked: (itemId: string, checked: boolean) => void;
 };
 
@@ -28,7 +25,7 @@ const Item: FC<ItemType> = observer(_props => {
           setChecked(!checked);
         }}
       />
-      <Text>{_props.shoppingListItem.product}</Text>
+      <Text>{_props.shoppingListItem.product.name}</Text>
     </TouchableOpacity>
   );
 });
@@ -39,4 +36,4 @@ const $container: ViewStyle = {
   alignItems: 'center',
 };
 
-export default Item;
+export default memo(Item);

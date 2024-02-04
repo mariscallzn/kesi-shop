@@ -1,5 +1,5 @@
 import {observer} from 'mobx-react-lite';
-import React, {FC} from 'react';
+import React, {FC, memo} from 'react';
 import {View, ViewStyle} from 'react-native';
 import {Card, IconButton, ProgressBar, Text} from 'react-native-paper';
 import {ShoppingList} from '../../models/ShoppingLists';
@@ -8,7 +8,7 @@ type Action = 'options' | 'card';
 
 type ShoppingListCardType = {
   shoppingList: ShoppingList;
-  onPress: (action: Action, id: string) => void;
+  onPress: (action: Action, shoppingList: ShoppingList) => void;
 };
 
 const ShoppingListCard: FC<ShoppingListCardType> = observer(_props => {
@@ -18,7 +18,7 @@ const ShoppingListCard: FC<ShoppingListCardType> = observer(_props => {
     <Card
       style={$container}
       onPress={() => {
-        onPress('card', shoppingList.id);
+        onPress('card', shoppingList);
       }}>
       <View style={$topContainer}>
         <Text style={$titleText} variant="titleLarge">
@@ -27,7 +27,7 @@ const ShoppingListCard: FC<ShoppingListCardType> = observer(_props => {
         <IconButton
           icon={'dots-vertical'}
           onPress={() => {
-            onPress('options', shoppingList.id);
+            onPress('options', shoppingList);
           }}
         />
       </View>
@@ -74,4 +74,4 @@ const $progressContainer: ViewStyle = {
   marginEnd: 12,
   justifyContent: 'center',
 };
-export default ShoppingListCard;
+export default memo(ShoppingListCard);

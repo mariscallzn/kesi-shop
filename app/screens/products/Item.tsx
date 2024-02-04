@@ -1,5 +1,5 @@
 import {observer} from 'mobx-react-lite';
-import React from 'react';
+import React, {memo} from 'react';
 import {View, ViewStyle} from 'react-native';
 import {IconButton, Text} from 'react-native-paper';
 import {Product} from '../../models/Product';
@@ -7,14 +7,14 @@ import {Product} from '../../models/Product';
 type Action = 'selected' | 'unselected';
 
 type ItemType = {
-  checked: boolean;
   product: Product;
   onSelectedChanged: (action: Action, product: Product) => void;
 };
 
 const Item = observer((props: ItemType) => {
-  const {product, checked, onSelectedChanged} = props;
-  const [_checked, setChecked] = React.useState(checked);
+  const {product, onSelectedChanged} = props;
+  const [_checked, setChecked] = React.useState(product.selected);
+
   return (
     <View style={$container}>
       <IconButton
@@ -34,4 +34,4 @@ const $container: ViewStyle = {
   flexDirection: 'row',
 };
 
-export default Item;
+export default memo(Item);

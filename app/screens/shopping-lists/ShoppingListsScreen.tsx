@@ -38,21 +38,27 @@ const ShoppingListsScreen: FC<ShoppingStackScreenProps<'ShoppingLists'>> =
           <AddShoppingList
             shoppingList={shoppingList}
             onAddOrUpdatePress={value => {
-              shoppingStore.addOrUpdateShoppingList(value);
+              shoppingStore.addOrUpdateShoppingList(value.id, value.name);
               setBottomSheetVisible(false);
+              setShoppingList(undefined);
             }}
           />
         </BottomSheet>
         <FlatList
           keyExtractor={item => item.id}
-          data={shoppingStore.shoppingLists}
+          data={shoppingStore.shoppingLists.map(h => h)}
           ItemSeparatorComponent={() => <View style={$flItemSeparator} />}
           renderItem={({item}) => (
             <ShoppingListCard
               shoppingList={item}
-              onPress={(action, id) => {
+              onPress={(action, _shoppingList) => {
                 if (action === 'card') {
-                  _props.navigation.navigate('ShoppingList', {listId: id});
+                  _props.navigation.navigate('ShoppingList', {
+                    listId: _shoppingList.id,
+                  });
+                } else {
+                  setShoppingList(_shoppingList);
+                  setBottomSheetVisible(true);
                 }
               }}
             />

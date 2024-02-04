@@ -10,6 +10,7 @@ type AddShoppingListType = {
   onAddOrUpdatePress: (newList: ShoppingListSnapshotIn) => void;
 };
 
+// TODO: Delete button.
 const AddShoppingList: FC<AddShoppingListType> = observer(_props => {
   const {shoppingList, onAddOrUpdatePress} = _props;
 
@@ -30,7 +31,8 @@ const AddShoppingList: FC<AddShoppingListType> = observer(_props => {
         onPress={() => {
           if (_listName) {
             onAddOrUpdatePress({
-              id: '',
+              // TODO: Make the view receive whatever and the data model should validate
+              id: shoppingList?.id ?? '',
               name: _listName,
             });
           }

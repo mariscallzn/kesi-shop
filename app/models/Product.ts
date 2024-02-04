@@ -6,6 +6,7 @@ export const ProductModel = types
   .props({
     id: types.identifier,
     name: types.string,
+    selected: types.optional(types.boolean, false),
   })
   .actions(withSetPropAction);
 

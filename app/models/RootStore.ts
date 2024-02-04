@@ -1,5 +1,5 @@
-import {Database} from '@nozbe/watermelondb';
 import {getEnv, Instance, SnapshotOut, types} from 'mobx-state-tree';
+import {AppComponent} from '../di/appComponent';
 import {ProductsStore} from './ProductsStore';
 import {ShoppingStore} from './ShoppingStore';
 
@@ -13,21 +13,8 @@ export const RootStoreModel = types
     productsStore: types.optional(ProductsStore, {}),
   })
   .views(self => ({
-    get appDatabase(): Database {
-      return getEnv(self).database;
-    },
-  }))
-  .actions(self => ({
-    dbWrite(writer: (database: Database) => void) {
-      (async () => {
-        await self.appDatabase.write(async () => {
-          try {
-            await writer(self.appDatabase);
-          } catch (error) {
-            console.error(error);
-          }
-        });
-      })();
+    get appComponent(): AppComponent {
+      return getEnv(self).appComponent;
     },
   }));
 

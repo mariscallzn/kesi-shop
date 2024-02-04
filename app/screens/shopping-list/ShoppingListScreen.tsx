@@ -6,8 +6,8 @@ import BottomSheet from '../../components/BottomSheet';
 import {Screen} from '../../components/Screen';
 import {translate} from '../../i18n/translate';
 import {useStores} from '../../models/helpers/useStores';
-import {ShoppingListItemSnapshotIn} from '../../models/ShoppingLists';
 import {ShoppingStackScreenProps} from '../../navigators/ShoppingNavigator';
+import {ShoppingListItem} from '../../repositories/ShoppingRepository';
 import AddProduct from './AddProduct';
 import Item from './Item';
 
@@ -19,7 +19,7 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
     )!!; //TODO Review this force read
     const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
     const [shoppingListItem, setShoppingListItem] = useState<
-      ShoppingListItemSnapshotIn | undefined
+      ShoppingListItem | undefined
     >(undefined);
 
     useEffect(() => {
@@ -50,7 +50,6 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
               setBottomSheetVisible(false);
               _props.navigation.navigate('Products', {
                 listId: _props.route.params.listId,
-                shoppingListProducts: items.map(i => i.product),
               });
             }}
           />
@@ -71,7 +70,13 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
           // TODO: Check render performance. Hack to force re-render.
           // It seems that "items" must be called. For some reason
           // if I only pass items it doesn't detect the changes
-          data={items.map(i => i)}
+          data={items.map(i => ({
+            id: i.id,
+            checked: i.checked,
+            product: {id: i.product_id, name: i.product},
+            quantity: i.quantity,
+            unit: i.unit,
+          }))}
           renderItem={({item}) => (
             <Item
               shoppingListItem={item}

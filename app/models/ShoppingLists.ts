@@ -10,6 +10,7 @@ export const ShoppingListItemModel = types
   .props({
     id: types.identifier,
     product: types.string,
+    product_id: '',
     quantity: 0,
     unit: '',
     checked: false,

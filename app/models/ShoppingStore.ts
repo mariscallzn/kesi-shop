@@ -1,13 +1,8 @@
 import {getParent, types} from 'mobx-state-tree';
-import {DAOShoppingListItems, DAOShoppingLists} from '../database/models';
-import {Tables} from '../database/schema';
+import {ShoppingListItem} from '../repositories/ShoppingRepository';
 import {withSetPropAction} from './helpers/withSetPropAction';
 import {RootStore} from './RootStore';
-import {
-  ShoppingListItemSnapshotIn,
-  ShoppingListModel,
-  ShoppingListSnapshotIn,
-} from './ShoppingLists';
+import {ShoppingListItemModel, ShoppingListModel} from './ShoppingLists';
 
 export const ShoppingStore = types
   .model('ShoppingStore')
@@ -25,61 +20,35 @@ export const ShoppingStore = types
       return getParent(self, 1);
     },
   }))
-  //Tree operations, these are going to be exposed but rarely used by the components
-  .actions(self => ({
-    pushShoppingList(shoppingList: ShoppingListSnapshotIn) {
-      self.shoppingLists.push(shoppingList);
-    },
-  }))
-  //#region Database operations
   //#region ShoppingLists' actions
   .actions(self => ({
     loadShoppingLists() {
       (async () => {
-        const shoppingLists: ShoppingListSnapshotIn[] = [];
-        const dbResult = await self.rootStore.appDatabase
-          .get<DAOShoppingLists>(Tables.shoppingLists)
-          .query()
-          .fetch();
+        const shoppingLists = await self.rootStore.appComponent
+          .shoppingRepository()
+          .syncAndFetchLists();
 
-        dbResult.forEach(async (result, index) => {
-          const items = await result.shoppingListItems.fetch();
-          shoppingLists.push(
+        self.setProp(
+          'shoppingLists',
+          shoppingLists.map(shoppingList =>
             ShoppingListModel.create({
-              id: result.id,
-              name: result.name,
-              checkedItems: items.filter(f => f.checked === true).length,
-              totalItems: items.length,
+              id: shoppingList.id,
+              name: shoppingList.name,
+              checkedItems: shoppingList.checkedItems,
+              totalItems: shoppingList.totalItems,
             }),
-          );
-          //TODO: I kind of feel I need to review this
-          if (index === dbResult.length - 1) {
-            self.setProp('shoppingLists', shoppingLists);
-          }
-        });
+          ),
+        );
       })();
     },
-    addOrUpdateShoppingList(shoppingList: ShoppingListSnapshotIn) {
-      self.rootStore.appDatabase
-        .get<DAOShoppingLists>(Tables.shoppingLists)
-        .find(shoppingList.id)
-        .then(async value => {
-          await value.updateShoppingList({
-            id: 'ignore',
-            name: value.name,
-          });
-          this.loadShoppingLists();
-        })
-        .catch(_ => {
-          self.rootStore.dbWrite(async db => {
-            await db
-              .get<DAOShoppingLists>(Tables.shoppingLists)
-              .create(_shoppingList => {
-                _shoppingList.name = shoppingList.name;
-              });
-            this.loadShoppingLists();
-          });
+    addOrUpdateShoppingList(id: string, name: string) {
+      (async () => {
+        await self.rootStore.appComponent.shoppingRepository().addOrUpdate({
+          id: id,
+          name: name,
         });
+        this.loadShoppingLists();
+      })();
     },
   }))
   //#endregion
@@ -87,99 +56,55 @@ export const ShoppingStore = types
   .actions(self => ({
     loadShoppingListItems(listId: string) {
       (async () => {
-        //Fetch data from DB
-        const daoShoppingListItems = await (
-          await self.rootStore.appDatabase
-            .get<DAOShoppingLists>(Tables.shoppingLists)
-            .find(listId)
-        ).shoppingListItems.fetch();
+        const shoppingListItems = await self.rootStore.appComponent
+          .shoppingRepository()
+          .getShoppingListItemsByListId(listId);
 
-        //Create a reference to the state tree
-        const shoppingList = self.getListById(listId);
-        if (shoppingList) {
-          const items = daoShoppingListItems
-            .map(i => i.convertToTreeModel())
-            .sort((a, b) => +(a.checked ?? false) - +(b.checked ?? false));
-
-          shoppingList.setProp('items', items);
-          shoppingList.setProp('totalItems', items.length);
-          shoppingList.setProp(
+        const stShoppingList = self.getListById(listId);
+        if (stShoppingList) {
+          const stShoppingListItems = shoppingListItems.map(shoppingListItem =>
+            ShoppingListItemModel.create({
+              id: shoppingListItem.id,
+              product: shoppingListItem.product.name,
+              product_id: shoppingListItem.product.id,
+              checked: shoppingListItem.checked,
+              quantity: shoppingListItem.quantity,
+              unit: shoppingListItem.unit,
+            }),
+          );
+          stShoppingList.setProp('items', stShoppingListItems);
+          stShoppingList.setProp('totalItems', stShoppingListItems.length);
+          stShoppingList.setProp(
             'checkedItems',
-            items.filter(i => i.checked === true).length,
+            stShoppingListItems.filter(i => i.checked === true).length,
           );
         }
       })();
     },
     addOrUpdateProductInShoppingList(
-      listItem: ShoppingListItemSnapshotIn,
+      listItem: ShoppingListItem,
       listId: string,
     ) {
       (async () => {
-        self.rootStore.appDatabase
-          .get<DAOShoppingListItems>(Tables.shoppingListItems)
-          .find(listItem.id)
-          //If it exists then we update
-          .then(async item => {
-            await item.updateShoppingListItem(listItem);
-            this.loadShoppingListItems(listId);
-          })
-          //If doesn't exist, we create
-          .catch(async _ => {
-            await (
-              await self.rootStore.appDatabase
-                .get<DAOShoppingLists>(Tables.shoppingLists)
-                .find(listId)
-            ).addShoppingListItem(listItem);
-            this.loadShoppingListItems(listId);
-          });
+        await self.rootStore.appComponent
+          .shoppingRepository()
+          .addOrUpdateShoppingListItem(listId, listItem);
+        this.loadShoppingListItems(listId);
       })();
     },
-
-    addProductsToShoppingList(products: string[], listId: string) {
+    addProductsToShoppingList(productIds: string[], listId: string) {
       (async () => {
-        const daoShoppingList = await self.rootStore.appDatabase
-          .get<DAOShoppingLists>(Tables.shoppingLists)
-          .find(listId);
-
-        const daoShoppingListItems =
-          await daoShoppingList.shoppingListItems.fetch();
-
-        const newItems = products.filter(
-          e2 => !daoShoppingListItems.some(e1 => e1.productName === e2),
-        );
-
-        const removedItems = daoShoppingListItems.filter(
-          e1 => !products.some(e2 => e2 === e1.productName),
-        );
-
-        newItems.forEach(newItem => {
-          daoShoppingList.addShoppingListItem({
-            id: 'ignore',
-            product: newItem,
-            checked: false,
-            quantity: 0,
-            unit: '',
-          });
-        });
-
-        self.rootStore.dbWrite(_ => {
-          removedItems.forEach(removedItem => removedItem.destroyPermanently());
-          this.loadShoppingListItems(listId);
-        });
+        await self.rootStore.appComponent
+          .shoppingRepository()
+          .addOrRemoveProductsToShoppingList(listId, productIds);
+        this.loadShoppingListItems(listId);
       })();
     },
     checkItemFromList(itemId: string, listId: string, checked: boolean) {
       (async () => {
-        await (
-          await (
-            await self.rootStore.appDatabase
-              .get<DAOShoppingLists>(Tables.shoppingLists)
-              .find(listId)
-          ).shoppingListItems.fetch()
-        )
-          .find(i => i.id === itemId)
-          ?.toggleItem(checked);
-
+        await self.rootStore.appComponent
+          .shoppingRepository()
+          .toggleShoppingListItemById(itemId, checked);
         this.loadShoppingListItems(listId);
       })();
     },

@@ -17,7 +17,6 @@ export type ShoppingStackParamList = {
   };
   Products: {
     listId?: string;
-    shoppingListProducts?: string[];
   };
 };
 

@@ -4,25 +4,25 @@ import {FlatList, View, ViewStyle} from 'react-native';
 import {Button, Chip, Divider, IconButton, TextInput} from 'react-native-paper';
 import {translate} from '../../i18n/translate';
 import {useStores} from '../../models/helpers/useStores';
-import {Product} from '../../models/Product';
-import {ShoppingListItemSnapshotIn} from '../../models/ShoppingLists';
+import {Product} from '../../repositories/ProductRepository';
+import {ShoppingListItem} from '../../repositories/ShoppingRepository';
 import Units from './Units';
 
 export type AddProductType = {
-  shoppingListItem?: ShoppingListItemSnapshotIn;
-  onAddOrUpdatePress: (newShoppingListItem: ShoppingListItemSnapshotIn) => void;
+  shoppingListItem?: ShoppingListItem;
+  onAddOrUpdatePress: (newShoppingListItem: ShoppingListItem) => void;
   onOpenList: () => void;
 };
 
 const AddProduct: FC<AddProductType> = observer(_props => {
   const {onAddOrUpdatePress, onOpenList} = _props;
   const {product, quantity, unit} = _props.shoppingListItem || {
-    product: '',
+    product: {id: '', name: ''},
     unit: '',
   };
   const [isListSuggestionsVisible, setListSuggestionVisibility] =
     useState(false);
-  const [_productName, setProductName] = useState(product);
+  const [_product, setProduct] = useState<Product>(product);
   const [_unit, setUnit] = useState(unit);
   const [_quantity, setQuantity] = useState(
     quantity === 0 ? '' : quantity?.toString(),
@@ -31,22 +31,23 @@ const AddProduct: FC<AddProductType> = observer(_props => {
   const {productsStore} = useStores();
 
   useEffect(() => {
-    (async () => {
-      await productsStore.loadProducts(undefined);
-    })();
+    productsStore.fetchProducts();
     return () => {
       productsStore.clearStateTree();
+      setProduct({id: '', name: ''});
+      setUnit('');
+      setQuantity('');
     };
   }, [productsStore]);
 
   const renderItem = (item: {
     product: Product;
-    onChipPress: (productName: string) => void;
+    onChipPress: (product: Product) => void;
   }) => {
     return (
       <Chip
         onPress={() => {
-          item.onChipPress(item.product.name);
+          item.onChipPress(item.product);
         }}>
         {item.product.name}
       </Chip>
@@ -60,9 +61,10 @@ const AddProduct: FC<AddProductType> = observer(_props => {
           style={$productNameTextInput}
           mode="outlined"
           label={translate('ShoppingListScreen.productName')}
-          value={_productName}
+          value={_product.name}
           onChangeText={e => {
-            setProductName(e);
+            productsStore.fetchProducts(undefined, e);
+            setProduct({id: '', name: e});
             setListSuggestionVisibility(true);
           }}
         />
@@ -75,13 +77,15 @@ const AddProduct: FC<AddProductType> = observer(_props => {
           keyboardShouldPersistTaps="always"
           keyExtractor={item => item.id}
           showsHorizontalScrollIndicator={false}
-          data={productsStore.filteredProducts(_productName).slice(0, 5)}
+          data={productsStore.products
+            .slice(0, 5)
+            .map(p => ({id: p.id, name: p.name}))}
           ItemSeparatorComponent={() => <View style={$flSeparator} />}
           renderItem={({item}) =>
             renderItem({
               product: item,
-              onChipPress: productName => {
-                setProductName(productName);
+              onChipPress: selectedProduct => {
+                setProduct(selectedProduct);
                 setListSuggestionVisibility(false);
               },
             })
@@ -139,9 +143,10 @@ const AddProduct: FC<AddProductType> = observer(_props => {
         onPress={() => {
           onAddOrUpdatePress({
             id: _props.shoppingListItem?.id ?? '',
-            product: _productName,
+            product: _product,
             quantity: _quantity === undefined ? 0 : +_quantity,
             unit: _unit ?? '',
+            checked: false,
           });
         }}>
         {_props.shoppingListItem === undefined

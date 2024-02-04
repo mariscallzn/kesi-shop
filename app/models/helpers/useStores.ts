@@ -1,5 +1,5 @@
 import {createContext, useContext} from 'react';
-import database from '../../database/database';
+import {appComponent} from '../../di/appComponent';
 import {RootStore, RootStoreModel} from '../RootStore';
 
 /**
@@ -14,7 +14,7 @@ import {RootStore, RootStoreModel} from '../RootStore';
  * very large), you may want to use a different strategy than immediately
  * instantiating it, although that should be rare.
  */
-const _rootStore = RootStoreModel.create({}, {database: database});
+const _rootStore = RootStoreModel.create({}, {appComponent: appComponent});
 
 /**
  * The RootStoreContext provides a way to access

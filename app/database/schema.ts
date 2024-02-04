@@ -4,11 +4,12 @@ import {
   tableName,
   tableSchema,
 } from '@nozbe/watermelondb';
-import {DAOShoppingListItems, DAOShoppingLists} from './models';
+import {DAOProducts, DAOShoppingListItems, DAOShoppingLists} from './models';
 
 export const Tables = {
   shoppingLists: tableName<DAOShoppingLists>('shopping_lists'),
   shoppingListItems: tableName<DAOShoppingListItems>('shopping_list_items'),
+  products: tableName<DAOProducts>('products'),
 };
 
 export const Columns = {
@@ -19,10 +20,15 @@ export const Columns = {
   },
   shoppingListItems: {
     shoppingListId: columnName('shopping_list_id'),
-    productName: columnName('product_name'),
+    productId: columnName('product_id'),
     quantity: columnName('quantity'),
     unit: columnName('unit'),
     checked: columnName('checked'),
+    createdAt: columnName('created_at'),
+    updatedAt: columnName('updated_at'),
+  },
+  products: {
+    name: columnName('name'),
     createdAt: columnName('created_at'),
     updatedAt: columnName('updated_at'),
   },
@@ -47,12 +53,20 @@ export default appSchema({
           type: 'string',
           isIndexed: true,
         },
-        {name: Columns.shoppingListItems.productName, type: 'string'},
+        {name: Columns.shoppingListItems.productId, type: 'string'},
         {name: Columns.shoppingListItems.quantity, type: 'number'},
         {name: Columns.shoppingListItems.unit, type: 'string'},
         {name: Columns.shoppingListItems.checked, type: 'boolean'},
         {name: Columns.shoppingListItems.createdAt, type: 'number'},
         {name: Columns.shoppingListItems.updatedAt, type: 'number'},
+      ],
+    }),
+    tableSchema({
+      name: Tables.products,
+      columns: [
+        {name: Columns.products.name, type: 'string'},
+        {name: Columns.products.createdAt, type: 'number'},
+        {name: Columns.products.updatedAt, type: 'number'},
       ],
     }),
   ],
