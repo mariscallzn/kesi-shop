@@ -29,8 +29,9 @@ const AddProduct: FC<AddProductType> = observer(_props => {
     product: {id: '', name: ''},
     unit: '',
   };
+  const [isListSuggestionsVisible, setListSuggestionVisibility] =
+    useState(false);
   const [_product, setProduct] = useState<Product>(product);
-  // TODO: Next -> Notify category selected on UI & Save Selected category
   const [_category, setCategory] = useState<Category | undefined>(category);
   const [_unit, setUnit] = useState(unit);
   const [_quantity, setQuantity] = useState(
@@ -47,6 +48,8 @@ const AddProduct: FC<AddProductType> = observer(_props => {
       setProduct({id: '', name: ''});
       setUnit('');
       setQuantity('');
+      setCategory(undefined);
+      setListSuggestionVisibility(false);
     };
   }, [productsStore, categoryStore]);
 
@@ -99,29 +102,33 @@ const AddProduct: FC<AddProductType> = observer(_props => {
           onChangeText={e => {
             productsStore.fetchProducts(undefined, e);
             setProduct({id: '', name: e});
+            setListSuggestionVisibility(true);
           }}
         />
         <IconButton icon="open-in-new" onPress={onOpenList} />
       </View>
-      <FlatList
-        horizontal
-        contentContainerStyle={$flContentContainer}
-        keyboardShouldPersistTaps="always"
-        keyExtractor={item => item.id}
-        showsHorizontalScrollIndicator={false}
-        data={productsStore.products
-          .slice(0, 5)
-          .map(p => ({id: p.id, name: p.name}))}
-        ItemSeparatorComponent={() => <View style={$flProductSeparator} />}
-        renderItem={({item}) =>
-          renderProductItem({
-            product: item,
-            onChipPress: selectedProduct => {
-              setProduct(selectedProduct);
-            },
-          })
-        }
-      />
+      {isListSuggestionsVisible ? (
+        <FlatList
+          horizontal
+          contentContainerStyle={$flContentContainer}
+          keyboardShouldPersistTaps="always"
+          keyExtractor={item => item.id}
+          showsHorizontalScrollIndicator={false}
+          data={productsStore.products
+            .slice(0, 5)
+            .map(p => ({id: p.id, name: p.name}))}
+          ItemSeparatorComponent={() => <View style={$flProductSeparator} />}
+          renderItem={({item}) =>
+            renderProductItem({
+              product: item,
+              onChipPress: selectedProduct => {
+                setProduct(selectedProduct);
+                setListSuggestionVisibility(false);
+              },
+            })
+          }
+        />
+      ) : null}
       <View style={$quantityContainer}>
         <TextInput
           style={$quantityTextInput}
