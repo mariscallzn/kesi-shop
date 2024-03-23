@@ -145,18 +145,23 @@ export class DatabaseShoppingRepository implements ShoppingRepository {
         });
       }
 
-      return shoppingListItems.sort((a, b) => {
-        if (!a.category && !b.category) {
-          return 0;
+      const checkItems: ShoppingListItem[] = [];
+      const undefinedCategoryItems: ShoppingListItem[] = [];
+      const categorizedItems: ShoppingListItem[] = [];
+
+      shoppingListItems.forEach(item => {
+        if (item.checked) {
+          checkItems.push(item);
+        } else if (!item.category) {
+          undefinedCategoryItems.push(item);
+        } else {
+          categorizedItems.push(item);
         }
-        if (!a.category) {
-          return 1;
-        }
-        if (!b.category) {
-          return -1;
-        }
-        return a.category.color.localeCompare(b.category.color);
       });
+
+      return categorizedItems
+        .sort((a, b) => a.category!!.color.localeCompare(b.category!!.color))
+        .concat(undefinedCategoryItems, checkItems);
     } catch (error) {
       throw error;
     }
