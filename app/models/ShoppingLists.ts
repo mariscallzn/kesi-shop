@@ -11,6 +11,8 @@ export const ShoppingListItemModel = types
     id: types.identifier,
     product: types.string,
     product_id: '',
+    categoryColor: '',
+    category_id: '',
     quantity: 0,
     unit: '',
     checked: false,

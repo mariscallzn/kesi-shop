@@ -1,6 +1,6 @@
 import {observer} from 'mobx-react-lite';
 import React, {FC, memo} from 'react';
-import {TouchableOpacity, ViewStyle} from 'react-native';
+import {TouchableOpacity, View, ViewStyle} from 'react-native';
 import {Checkbox, Text} from 'react-native-paper';
 import {ShoppingListItem} from '../../repositories/ShoppingRepository';
 
@@ -18,6 +18,17 @@ const Item: FC<ItemType> = observer(_props => {
       onPress={() => {
         _props.onItemPress(_props.shoppingListItem);
       }}>
+      {_props.shoppingListItem.category && (
+        <View
+          style={{
+            ...$categoryView,
+            backgroundColor:
+              _props.shoppingListItem.category?.color !== ''
+                ? _props.shoppingListItem.category?.color
+                : undefined,
+          }}
+        />
+      )}
       <Checkbox
         status={checked ? 'checked' : 'unchecked'}
         onPress={() => {
@@ -34,6 +45,11 @@ const $container: ViewStyle = {
   flex: 1,
   flexDirection: 'row',
   alignItems: 'center',
+};
+
+const $categoryView: ViewStyle = {
+  width: 4,
+  height: '100%',
 };
 
 export default memo(Item);

@@ -34,23 +34,6 @@ export class DAOShoppingLists extends Model {
       _shoppingList.name = name;
     });
   }
-
-  @writer async addShoppingListItem(
-    checked: boolean,
-    quantity: number,
-    unit: string,
-    product: DAOProducts,
-  ): Promise<DAOShoppingListItems> {
-    return await this.collections
-      .get<DAOShoppingListItems>(Tables.shoppingListItems)
-      .create(item => {
-        item.shoppingList.set(this);
-        item.product.set(product);
-        item.checked = checked;
-        item.quantity = quantity;
-        item.unit = unit;
-      });
-  }
 }
 //#endregion
 
@@ -66,7 +49,11 @@ export class DAOShoppingListItems extends Model {
   @relation(Tables.products, ShoppingListItemsColumns.productId)
   product!: Relation<DAOProducts>;
 
-  @text(ShoppingListItemsColumns.shoppingListId) shoppingListId!: string;
+  @relation(Tables.categories, ShoppingListItemsColumns.categoryId)
+  category!: Relation<DAOCategories>;
+
+  @text(ShoppingListItemsColumns.shoppingListId)
+  shoppingListId!: string;
   @field(ShoppingListItemsColumns.quantity) quantity!: number;
   @text(ShoppingListItemsColumns.unit) unit!: string;
   @field(ShoppingListItemsColumns.checked) checked!: boolean;
@@ -84,12 +71,14 @@ export class DAOShoppingListItems extends Model {
     quantity: number,
     unit: string,
     productId: string,
+    categoriesId?: string,
   ): Promise<DAOShoppingListItems> {
     return await this.update(item => {
       item.product.id = productId;
       item.checked = checked;
       item.quantity = quantity;
       item.unit = unit;
+      item.category.id = categoriesId;
     });
   }
 
@@ -113,5 +102,16 @@ export class DAOProducts extends Model {
   name!: string;
   @date(ProductsColumn.createdAt) createdAt!: Date;
   @date(ProductsColumn.updatedAt) updatedAt!: Date;
+}
+//#endregion
+
+//#region DAO Category
+const CategoriesColumn = Columns.categories;
+export class DAOCategories extends Model {
+  static table = Tables.categories;
+  @text(CategoriesColumn.color)
+  color!: string;
+  @date(CategoriesColumn.createdAt) createdAt!: Date;
+  @date(CategoriesColumn.updatedAt) updatedAt!: Date;
 }
 //#endregion

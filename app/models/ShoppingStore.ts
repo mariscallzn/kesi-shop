@@ -70,6 +70,8 @@ export const ShoppingStore = types
               checked: shoppingListItem.checked,
               quantity: shoppingListItem.quantity,
               unit: shoppingListItem.unit,
+              categoryColor: shoppingListItem.category?.color,
+              category_id: shoppingListItem.category?.id,
             }),
           );
           stShoppingList.setProp('items', stShoppingListItems);

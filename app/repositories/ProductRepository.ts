@@ -70,8 +70,8 @@ export interface ProductRepository {
   findOrCreate(product: Product): Promise<Product>;
   findByNameOrGetAll(name?: string): Promise<Product[]>;
   save(name: string): Promise<Product>;
-  findProductById(id: string): Promise<Product | undefined>;
   saveProducts(products: Product[]): void;
+  findProductById(id: string): Promise<Product | undefined>;
   isDataSynced(): Promise<Boolean>;
 }
 
@@ -98,15 +98,30 @@ export class DatabaseProductRepository implements ProductRepository {
   async save(name: string): Promise<Product> {
     try {
       return await this.database.write(async () => {
-        const newDaoProduct = await this.database
+        return await this.database
           .get<DAOProducts>(Tables.products)
           .create(dao => {
             dao.name = name;
           });
-        return newDaoProduct;
       });
     } catch (error) {
       throw error;
+    }
+  }
+
+  async saveProducts(products: Product[]) {
+    for (const product of products) {
+      try {
+        this.database.write(async () => {
+          return await this.database
+            .get<DAOProducts>(Tables.products)
+            .create(dao => {
+              dao.name = product.name;
+            });
+        });
+      } catch (error) {
+        throw error;
+      }
     }
   }
 
@@ -118,22 +133,6 @@ export class DatabaseProductRepository implements ProductRepository {
       return daoProduct;
     } catch (error) {
       return;
-    }
-  }
-
-  async saveProducts(products: Product[]) {
-    for (const product of products) {
-      try {
-        this.database.write(async () => {
-          return await this.database
-            .get<DAOProducts>(Tables.products)
-            .create(_product => {
-              _product.name = product.name;
-            });
-        });
-      } catch (error) {
-        throw error;
-      }
     }
   }
 

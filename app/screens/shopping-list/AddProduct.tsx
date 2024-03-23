@@ -1,9 +1,18 @@
 import {observer} from 'mobx-react-lite';
 import React, {FC, useEffect, useState} from 'react';
-import {FlatList, View, ViewStyle} from 'react-native';
-import {Button, Chip, Divider, IconButton, TextInput} from 'react-native-paper';
+import {FlatList, TouchableOpacity, View, ViewStyle} from 'react-native';
+import {
+  Button,
+  Chip,
+  DefaultTheme,
+  Divider,
+  Icon,
+  IconButton,
+  TextInput,
+} from 'react-native-paper';
 import {translate} from '../../i18n/translate';
 import {useStores} from '../../models/helpers/useStores';
+import {Category} from '../../repositories/CategoryRepository';
 import {Product} from '../../repositories/ProductRepository';
 import {ShoppingListItem} from '../../repositories/ShoppingRepository';
 import Units from './Units';
@@ -16,31 +25,32 @@ export type AddProductType = {
 
 const AddProduct: FC<AddProductType> = observer(_props => {
   const {onAddOrUpdatePress, onOpenList} = _props;
-  const {product, quantity, unit} = _props.shoppingListItem || {
+  const {product, category, quantity, unit} = _props.shoppingListItem || {
     product: {id: '', name: ''},
     unit: '',
   };
-  const [isListSuggestionsVisible, setListSuggestionVisibility] =
-    useState(false);
   const [_product, setProduct] = useState<Product>(product);
+  // TODO: Next -> Notify category selected on UI & Save Selected category
+  const [_category, setCategory] = useState<Category | undefined>(category);
   const [_unit, setUnit] = useState(unit);
   const [_quantity, setQuantity] = useState(
     quantity === 0 ? '' : quantity?.toString(),
   );
 
-  const {productsStore} = useStores();
+  const {productsStore, categoryStore} = useStores();
 
   useEffect(() => {
     productsStore.fetchProducts();
+    categoryStore.fetchCategories();
     return () => {
       productsStore.clearStateTree();
       setProduct({id: '', name: ''});
       setUnit('');
       setQuantity('');
     };
-  }, [productsStore]);
+  }, [productsStore, categoryStore]);
 
-  const renderItem = (item: {
+  const renderProductItem = (item: {
     product: Product;
     onChipPress: (product: Product) => void;
   }) => {
@@ -51,6 +61,30 @@ const AddProduct: FC<AddProductType> = observer(_props => {
         }}>
         {item.product.name}
       </Chip>
+    );
+  };
+
+  const renderCategoryItem = (item: {
+    category: Category;
+    onChipPress: (category: Category) => void;
+  }) => {
+    const isSelected = _category?.color === item.category.color;
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          item.onChipPress(item.category);
+        }}>
+        <View
+          style={[$categoryContainer, {backgroundColor: item.category.color}]}>
+          {isSelected ? (
+            <Icon
+              source="circle-slice-8"
+              size={24}
+              color={DefaultTheme.colors.onBackground}
+            />
+          ) : null}
+        </View>
+      </TouchableOpacity>
     );
   };
 
@@ -65,33 +99,29 @@ const AddProduct: FC<AddProductType> = observer(_props => {
           onChangeText={e => {
             productsStore.fetchProducts(undefined, e);
             setProduct({id: '', name: e});
-            setListSuggestionVisibility(true);
           }}
         />
         <IconButton icon="open-in-new" onPress={onOpenList} />
       </View>
-      {isListSuggestionsVisible ? (
-        <FlatList
-          horizontal
-          contentContainerStyle={$flContentContainer}
-          keyboardShouldPersistTaps="always"
-          keyExtractor={item => item.id}
-          showsHorizontalScrollIndicator={false}
-          data={productsStore.products
-            .slice(0, 5)
-            .map(p => ({id: p.id, name: p.name}))}
-          ItemSeparatorComponent={() => <View style={$flSeparator} />}
-          renderItem={({item}) =>
-            renderItem({
-              product: item,
-              onChipPress: selectedProduct => {
-                setProduct(selectedProduct);
-                setListSuggestionVisibility(false);
-              },
-            })
-          }
-        />
-      ) : null}
+      <FlatList
+        horizontal
+        contentContainerStyle={$flContentContainer}
+        keyboardShouldPersistTaps="always"
+        keyExtractor={item => item.id}
+        showsHorizontalScrollIndicator={false}
+        data={productsStore.products
+          .slice(0, 5)
+          .map(p => ({id: p.id, name: p.name}))}
+        ItemSeparatorComponent={() => <View style={$flProductSeparator} />}
+        renderItem={({item}) =>
+          renderProductItem({
+            product: item,
+            onChipPress: selectedProduct => {
+              setProduct(selectedProduct);
+            },
+          })
+        }
+      />
       <View style={$quantityContainer}>
         <TextInput
           style={$quantityTextInput}
@@ -137,6 +167,27 @@ const AddProduct: FC<AddProductType> = observer(_props => {
       <Divider />
       {/* TODO: Read from settings which system to load*/}
       <Units measurementSystem="imperial" setUnit={setUnit} />
+      <FlatList
+        horizontal
+        contentContainerStyle={$flContentContainer}
+        keyboardShouldPersistTaps="always"
+        keyExtractor={item => item.id}
+        showsHorizontalScrollIndicator={false}
+        data={categoryStore.categories}
+        ItemSeparatorComponent={() => <View style={$flCategorySeparator} />}
+        renderItem={({item}) =>
+          renderCategoryItem({
+            category: item,
+            onChipPress: selectedCategory => {
+              setCategory(
+                _category?.color === selectedCategory.color
+                  ? undefined
+                  : selectedCategory,
+              );
+            },
+          })
+        }
+      />
       <Button
         style={$addButton}
         mode="contained-tonal"
@@ -144,6 +195,7 @@ const AddProduct: FC<AddProductType> = observer(_props => {
           onAddOrUpdatePress({
             id: _props.shoppingListItem?.id ?? '',
             product: _product,
+            category: _category,
             quantity: _quantity === undefined ? 0 : +_quantity,
             unit: _unit ?? '',
             checked: false,
@@ -186,14 +238,28 @@ const $unitTextInput: ViewStyle = {
 
 const $addButton: ViewStyle = {
   marginHorizontal: 16,
+  marginTop: 16,
 };
 
 const $flContentContainer: ViewStyle = {
   paddingHorizontal: 16,
   marginTop: 8,
 };
-const $flSeparator: ViewStyle = {
+
+const $flProductSeparator: ViewStyle = {
   width: 4,
+};
+
+const $flCategorySeparator: ViewStyle = {
+  width: 12,
+};
+
+const $categoryContainer: ViewStyle = {
+  borderRadius: 8,
+  height: 32,
+  width: 32,
+  alignItems: 'center',
+  justifyContent: 'center',
 };
 
 export default AddProduct;

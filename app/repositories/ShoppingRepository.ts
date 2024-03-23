@@ -2,6 +2,7 @@ import {Database, Q} from '@nozbe/watermelondb';
 import {asc, desc} from '@nozbe/watermelondb/QueryDescription';
 import {DAOShoppingListItems, DAOShoppingLists} from '../database/models';
 import {Columns, Tables} from '../database/schema';
+import {Category, CategoryFacilitator} from './CategoryRepository';
 import {Product, ProductFacilitator} from './ProductRepository';
 
 type ShoppingList = {
@@ -15,6 +16,7 @@ type ShoppingList = {
 export type ShoppingListItem = {
   id: string;
   product: Product;
+  category?: Category;
   quantity: number;
   unit: string;
   checked: boolean;
@@ -38,15 +40,22 @@ export interface ShoppingRepository {
 export class DatabaseShoppingRepository implements ShoppingRepository {
   private readonly database: Database;
   private readonly productFacilitator: ProductFacilitator;
+  private readonly categoryFacilitator: CategoryFacilitator;
 
-  constructor(database: Database, productFacilitator: ProductFacilitator) {
+  constructor(
+    database: Database,
+    productFacilitator: ProductFacilitator,
+    categoryFacilitator: CategoryFacilitator,
+  ) {
     this.database = database;
     this.productFacilitator = productFacilitator;
+    this.categoryFacilitator = categoryFacilitator;
   }
 
   async syncAndFetchLists(): Promise<ShoppingList[]> {
     try {
       await this.productFacilitator.checkAndPrePopulate();
+      await this.categoryFacilitator.checkAndPrePopulate();
 
       const shoppingLists: ShoppingList[] = [];
       const daoShoppingLists = await this.database
@@ -125,16 +134,29 @@ export class DatabaseShoppingRepository implements ShoppingRepository {
       const shoppingListItems: ShoppingListItem[] = [];
       for (const daoShoppingListItem of daoShoppingListItems) {
         const daoProduct = await daoShoppingListItem.product.fetch();
+        const daoCategory = await daoShoppingListItem.category.fetch();
         shoppingListItems.push({
           id: daoShoppingListItem.id,
           product: daoProduct,
+          category: daoCategory,
           checked: daoShoppingListItem.checked,
           quantity: daoShoppingListItem.quantity,
           unit: daoShoppingListItem.unit,
         });
       }
 
-      return shoppingListItems;
+      return shoppingListItems.sort((a, b) => {
+        if (!a.category && !b.category) {
+          return 0;
+        }
+        if (!a.category) {
+          return 1;
+        }
+        if (!b.category) {
+          return -1;
+        }
+        return a.category.color.localeCompare(b.category.color);
+      });
     } catch (error) {
       throw error;
     }
@@ -149,6 +171,13 @@ export class DatabaseShoppingRepository implements ShoppingRepository {
         shoppingListItem.product,
       );
 
+      let daoCategory: Category | null = null;
+      if (shoppingListItem.category) {
+        daoCategory = await this.categoryFacilitator.findOrCreate(
+          shoppingListItem.category,
+        );
+      }
+
       let updatedShoppingList: DAOShoppingListItems;
       try {
         const daoShoppingListItem = await this.database
@@ -159,6 +188,7 @@ export class DatabaseShoppingRepository implements ShoppingRepository {
           shoppingListItem.quantity,
           shoppingListItem.unit,
           daoProduct.id,
+          daoCategory?.id,
         );
       } catch (error) {
         updatedShoppingList = await this.database.write(async () => {
@@ -170,6 +200,7 @@ export class DatabaseShoppingRepository implements ShoppingRepository {
               dao.unit = shoppingListItem.unit;
               dao.product.id = daoProduct.id;
               dao.shoppingList.id = listId;
+              dao.category.id = daoCategory?.id;
             });
         });
       }
@@ -177,6 +208,10 @@ export class DatabaseShoppingRepository implements ShoppingRepository {
         id: updatedShoppingList.id,
         checked: updatedShoppingList.checked,
         product: {id: daoProduct.id, name: daoProduct.name},
+        category: {
+          id: daoCategory?.id ?? 'n/a',
+          color: daoCategory?.color ?? 'n/a',
+        },
         quantity: updatedShoppingList.quantity,
         unit: updatedShoppingList.unit,
       };

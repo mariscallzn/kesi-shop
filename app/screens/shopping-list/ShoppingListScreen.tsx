@@ -70,12 +70,13 @@ const ShoppingListScreen: FC<ShoppingStackScreenProps<'ShoppingList'>> =
           // TODO: Check render performance. Hack to force re-render.
           // It seems that "items" must be called. For some reason
           // if I only pass items it doesn't detect the changes
-          data={items.map(i => ({
+          data={items.map<ShoppingListItem>(i => ({
             id: i.id,
             checked: i.checked,
             product: {id: i.product_id, name: i.product},
             quantity: i.quantity,
             unit: i.unit,
+            category: {id: i.category_id, color: i.categoryColor},
           }))}
           renderItem={({item}) => (
             <Item

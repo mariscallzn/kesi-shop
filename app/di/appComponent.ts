@@ -1,6 +1,14 @@
 import {Database} from '@nozbe/watermelondb';
 import database from '../database/database';
 import {
+  CategoryFacilitator,
+  CategoryFacilitatorImpl,
+  CategoryRepository,
+  DatabaseCategoriesRepository,
+  DefaultCategoriesProvider,
+  JsonDefaultCategoriesProvider,
+} from '../repositories/CategoryRepository';
+import {
   DatabaseProductRepository,
   DefaultProductsProvider,
   JsonDefaultProductsProvider,
@@ -16,15 +24,22 @@ import {
 export interface AppComponent {
   productRepository(): ProductRepository;
   shoppingRepository(): ShoppingRepository;
+  categoryRepository(): CategoryRepository;
 }
 
 class AppModule {
   private readonly database: Database;
   private readonly defaultProductsJson: string;
+  private readonly defaultCategoriesJson: string;
 
-  constructor(_database: Database, defaultProductsJson: string) {
+  constructor(
+    _database: Database,
+    defaultProductsJson: string,
+    defaultCategoriesJson: string,
+  ) {
     this.database = _database;
     this.defaultProductsJson = defaultProductsJson;
+    this.defaultCategoriesJson = defaultCategoriesJson;
   }
 
   private providesDatabase(): Database {
@@ -55,11 +70,44 @@ class AppModule {
     );
   }
 
+  private providesDefaultCategoriesJson(): string {
+    return this.defaultCategoriesJson;
+  }
+
+  private providesCategoryRepository(_database: Database): CategoryRepository {
+    return new DatabaseCategoriesRepository(_database);
+  }
+
+  private providesDefaultCategoriesProvider(
+    json: string,
+  ): DefaultCategoriesProvider {
+    return new JsonDefaultCategoriesProvider(json);
+  }
+
+  private providesCategoryFacilitator(
+    categoryRepository: CategoryRepository,
+    defaultCategoriesProvider: DefaultCategoriesProvider,
+  ): CategoryFacilitator {
+    return new CategoryFacilitatorImpl(
+      categoryRepository,
+      defaultCategoriesProvider,
+    );
+  }
+
   private providesShoppingRepository(
     _database: Database,
     productFacilitator: ProductFacilitator,
+    categoryFacilitator: CategoryFacilitator,
   ): ShoppingRepository {
-    return new DatabaseShoppingRepository(_database, productFacilitator);
+    return new DatabaseShoppingRepository(
+      _database,
+      productFacilitator,
+      categoryFacilitator,
+    );
+  }
+
+  getCategoryRepository(): CategoryRepository {
+    return this.providesCategoryRepository(this.providesDatabase());
   }
 
   getProductRepository(): ProductRepository {
@@ -73,6 +121,12 @@ class AppModule {
         this.getProductRepository(),
         this.providesDefaultProductsProvider(
           this.providesDefaultProductsJson(),
+        ),
+      ),
+      this.providesCategoryFacilitator(
+        this.getCategoryRepository(),
+        this.providesDefaultCategoriesProvider(
+          this.providesDefaultCategoriesJson(),
         ),
       ),
     );
@@ -90,8 +144,15 @@ class AppComponentProduction implements AppComponent {
   shoppingRepository(): ShoppingRepository {
     return this.appModule.getShoppingRepository();
   }
+  categoryRepository(): CategoryRepository {
+    return this.appModule.getCategoryRepository();
+  }
 }
 
 export const appComponent: AppComponent = new AppComponentProduction(
-  new AppModule(database, JSON.stringify(require('../products.json'))),
+  new AppModule(
+    database,
+    JSON.stringify(require('../products.json')),
+    JSON.stringify(require('../categories.json')),
+  ),
 );

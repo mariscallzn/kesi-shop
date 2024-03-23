@@ -1,5 +1,6 @@
 import {getEnv, Instance, SnapshotOut, types} from 'mobx-state-tree';
 import {AppComponent} from '../di/appComponent';
+import {CategoryStore} from './CategoryStore';
 import {ProductsStore} from './ProductsStore';
 import {ShoppingStore} from './ShoppingStore';
 
@@ -11,6 +12,7 @@ export const RootStoreModel = types
   .props({
     shoppingStore: types.optional(ShoppingStore, {}),
     productsStore: types.optional(ProductsStore, {}),
+    categoryStore: types.optional(CategoryStore, {}),
   })
   .views(self => ({
     get appComponent(): AppComponent {
