@@ -1,7 +1,7 @@
 import {observer} from 'mobx-react-lite';
 import React, {FC, memo} from 'react';
 import {TouchableOpacity, View, ViewStyle} from 'react-native';
-import {Checkbox, Text} from 'react-native-paper';
+import {IconButton, Text, useTheme} from 'react-native-paper';
 import {ShoppingListItem} from '../../repositories/ShoppingRepository';
 
 export type ItemType = {
@@ -12,13 +12,33 @@ export type ItemType = {
 
 const Item: FC<ItemType> = observer(_props => {
   const [checked, setChecked] = React.useState(_props.shoppingListItem.checked);
+  const {colors} = useTheme();
+  const CustomCheckBox = () => {
+    return (
+      <IconButton
+        size={20}
+        iconColor={checked ? 'green' : colors.primary}
+        icon={checked ? 'check' : 'circle-outline'}
+        onPress={() => {
+          _props.onItemChecked(_props.shoppingListItem.id, !checked);
+          setChecked(!checked);
+        }}
+      />
+    );
+  };
+
   return (
     <TouchableOpacity
       style={$container}
       onPress={() => {
-        _props.onItemPress(_props.shoppingListItem);
+        if (checked) {
+          _props.onItemChecked(_props.shoppingListItem.id, !checked);
+          setChecked(!checked);
+        } else {
+          _props.onItemPress(_props.shoppingListItem);
+        }
       }}>
-      {_props.shoppingListItem.category && (
+      {_props.shoppingListItem.category && !checked && (
         <View
           style={{
             ...$categoryView,
@@ -29,14 +49,24 @@ const Item: FC<ItemType> = observer(_props => {
           }}
         />
       )}
-      <Checkbox
-        status={checked ? 'checked' : 'unchecked'}
-        onPress={() => {
-          _props.onItemChecked(_props.shoppingListItem.id, !checked);
-          setChecked(!checked);
-        }}
-      />
-      <Text>{_props.shoppingListItem.product.name}</Text>
+      <CustomCheckBox />
+      <Text
+        variant="bodyLarge"
+        style={[
+          $title,
+          {color: checked ? colors.onSurfaceDisabled : colors.onBackground},
+        ]}>
+        {_props.shoppingListItem.product.name}
+      </Text>
+      {_props.shoppingListItem.quantity > 0 && !checked && (
+        <View style={[$amountContainer, {backgroundColor: colors.onPrimary}]}>
+          <Text
+            style={[$amount, {color: colors.primary}]}
+            variant={'labelLarge'}>
+            {_props.shoppingListItem.quantity + _props.shoppingListItem.unit}
+          </Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 });
@@ -50,6 +80,21 @@ const $container: ViewStyle = {
 const $categoryView: ViewStyle = {
   width: 4,
   height: '100%',
+};
+
+const $title: ViewStyle = {
+  flex: 1,
+};
+
+const $amountContainer: ViewStyle = {
+  marginHorizontal: 16,
+  borderRadius: 32,
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+const $amount: ViewStyle = {
+  marginHorizontal: 16,
 };
 
 export default memo(Item);
