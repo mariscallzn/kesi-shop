@@ -29,7 +29,10 @@ const Item: FC<ItemType> = observer(_props => {
 
   return (
     <TouchableOpacity
-      style={$container}
+      style={[
+        $container,
+        {backgroundColor: checked ? undefined : colors.backdrop},
+      ]}
       onPress={() => {
         if (checked) {
           _props.onItemChecked(_props.shoppingListItem.id, !checked);

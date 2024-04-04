@@ -1,5 +1,5 @@
 import {Database, Q} from '@nozbe/watermelondb';
-import {asc, desc} from '@nozbe/watermelondb/QueryDescription';
+import {asc} from '@nozbe/watermelondb/QueryDescription';
 import {DAOShoppingListItems, DAOShoppingLists} from '../database/models';
 import {Columns, Tables} from '../database/schema';
 import {Category, CategoryFacilitator} from './CategoryRepository';
@@ -128,7 +128,6 @@ export class DatabaseShoppingRepository implements ShoppingRepository {
       const daoShoppingListItems =
         await daoShoppingList.shoppingListItems.extend(
           Q.sortBy(Columns.shoppingListItems.checked, asc),
-          Q.sortBy(Columns.shoppingListItems.updatedAt, desc),
         );
 
       const shoppingListItems: ShoppingListItem[] = [];
@@ -152,7 +151,7 @@ export class DatabaseShoppingRepository implements ShoppingRepository {
       shoppingListItems.forEach(item => {
         if (item.checked) {
           checkItems.push(item);
-        } else if (!item.category) {
+        } else if (!item.category?.color || item.category?.color === '') {
           undefinedCategoryItems.push(item);
         } else {
           categorizedItems.push(item);
